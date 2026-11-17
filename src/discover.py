@@ -131,6 +131,12 @@ def discover_twitch(conn, conf, client_id, client_secret):
         if c.get("view_count", 0) < 500:
             continue
 
+        src = next((x for x in sources()
+                    if (x.get("twitch_login") or "").lower() == login), None)
+        if src is not None:
+            from common import footage_ok, is_publishable
+            if is_publishable(src) and not footage_ok(src, c.get("created_at")):
+                continue          # outside the campaign's footage window
         score, note = score_clip(c, conf)
         if score < 0:
             log.info("skip %s (%s)", c["id"], note)

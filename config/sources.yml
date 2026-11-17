@@ -38,6 +38,8 @@ sources:
     streamer: "Tomo"
     youtube_channel: "https://www.youtube.com/@Tomovids/streams"
     title_must_include: ["gta"]           # GTA VI streams only
+    title_must_exclude: ["trailer", "reaction"]   # campaign wants GTA VI gameplay
+    footage_after: "2026-11-18T00:00:00-05:00"
     link: "youtube.com/@Tomovids"
     permission: campaign
     campaign: "TOMO GTA VI Clipping"
@@ -71,6 +73,7 @@ sources:
       - "LACY's GTA 6 marathon"
       - "LACY reacts in GTA 6"
     publish_after: "2026-11-18T00:00:00-05:00"
+    footage_after: "2026-11-18T00:00:00-05:00"   # rules: marathon footage only
     longform: true
     enabled: true
 
@@ -92,6 +95,8 @@ sources:
     # Footage: ONLY his Nov 19 Kick stream. Paste the VOD link into
     # config/vod_queue.yml with source_id: cr_ruckus_dom after the stream ends.
     publish_after: "2026-11-19T09:00:00-08:00"
+    footage_after: "2026-11-19T00:00:00-08:00"   # brief: ONLY his Nov 19 stream
+    footage_before: "2026-11-20T12:00:00-08:00"
     publish_before: "2026-12-19T23:59:00-08:00"
     longform: true
     enabled: true

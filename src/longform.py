@@ -177,7 +177,7 @@ def run():
     conn.row_factory = __import__("sqlite3").Row
     # publish lane first: those are the clips that can make money
     todo = conn.execute(
-        "SELECT * FROM vods WHERE state!='done' ORDER BY "
+        "SELECT * FROM vods WHERE state IN ('new','scanning') ORDER BY "
         "CASE lane WHEN 'publish' THEN 0 ELSE 1 END, updated_at LIMIT ?",
         (conf["longform"]["max_vods_per_run"],)).fetchall()
     total = 0
@@ -186,7 +186,8 @@ def run():
             total += process_vod(conn, v, conf)
         except Exception as e:  # noqa: BLE001
             log.error("VOD %s failed: %s", v["vod_id"], e)
-            conn.execute("UPDATE vods SET state='error' WHERE vod_id=?",
+            conn.execute("UPDATE vods SET state='error', "
+                         "updated_at=CURRENT_TIMESTAMP WHERE vod_id=?",
                          (v["vod_id"],))
             conn.commit()
     log.info("long-form: %d clips cut this run", total)

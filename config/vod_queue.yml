@@ -8,6 +8,12 @@
 #               it gets proof-of-concept clips for outreach, never published.
 #   streamer:   optional display name (used in credits and outreach)
 #   max_clips:  optional cap for this video
+#   recorded:   optional date the stream happened, e.g. "2026-11-19T12:00:00-08:00".
+#               Leave it out and the robot trusts you that the footage is allowed.
+#
+# RUCKUS campaign (Nov 19 stream ONLY) — after Dom's stream ends, paste:
+#   - url: "https://kick.com/dasgasd3m/videos/<id>"
+#     source_id: cr_ruckus_dom
 #
 # Processed entries are remembered in state/, so leaving them here is harmless.
 # ─────────────────────────────────────────────────────────────────────────────

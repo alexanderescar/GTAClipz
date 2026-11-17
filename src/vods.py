@@ -17,7 +17,9 @@ import re
 
 import yaml
 
-from common import ROOT, cfg, db, lane_for, log, source_by_id, sources
+import datetime as dt
+
+from common import ROOT, cfg, db, footage_ok, lane_for, log, source_by_id, sources
 
 AUTO_SCOUT = {"id": "auto_scout", "streamer": "auto", "permission": "none"}
 
@@ -30,8 +32,25 @@ def parse_twitch_duration(s):
 
 
 def upsert_vod(conn, vod_id, source, url, *, streamer=None, platform="twitch",
-               title="", duration=0, is_live=False, max_clips=None):
+               title="", duration=0, is_live=False, max_clips=None, created_at=None,
+               trusted=False):
     lane = lane_for(source)
+    # When a source has no creation time (a channel listing), "first seen" is
+    # the conservative stand-in: anything already up today predates the window.
+    row = conn.execute("SELECT first_seen, created_at FROM vods WHERE vod_id=?",
+                       (vod_id,)).fetchone()
+    when = created_at or (row and (row[1] or row[0] + "+00:00")) or \
+        dt.datetime.now(dt.timezone.utc).isoformat()
+    # trusted = a VOD Alex pasted into vod_queue.yml himself (he checked the date)
+    if lane == "publish" and not trusted and not footage_ok(source, when):
+        conn.execute(
+            """INSERT INTO vods (vod_id, source_id, streamer, platform, url, title,
+                                 lane, state, created_at)
+               VALUES (?,?,?,?,?,?,?, 'ineligible', ?)
+               ON CONFLICT(vod_id) DO UPDATE SET state='ineligible'""",
+            (vod_id, source["id"], streamer or source.get("streamer"), platform,
+             url, title, lane, when))
+        return
     conn.execute(
         """INSERT INTO vods (vod_id, source_id, streamer, platform, url, title,
                              lane, duration, is_live, max_clips)
@@ -43,6 +62,8 @@ def upsert_vod(conn, vod_id, source, url, *, streamer=None, platform="twitch",
         (vod_id, source["id"], streamer or source.get("streamer"), platform, url,
          title, lane, duration, int(is_live), max_clips),
     )
+    if created_at:
+        conn.execute("UPDATE vods SET created_at=? WHERE vod_id=?", (created_at, vod_id))
 
 
 # ── 1 + 4: Twitch ─────────────────────────────────────────────────────────────
@@ -74,7 +95,8 @@ def from_twitch(conn, conf):
             for i, v in enumerate(vids):
                 upsert_vod(conn, "tw:" + v["id"], s, v["url"],
                            title=v["title"], duration=parse_twitch_duration(v["duration"]),
-                           is_live=(uid in live and i == 0))
+                           is_live=(uid in live and i == 0),
+                           created_at=v.get("created_at"))
                 n += 1
 
     # 4. auto-discovery: who's biggest in GTA 6 right now that we don't track
@@ -113,12 +135,15 @@ def from_youtube_channels(conn):
              s["youtube_channel"]],
             capture_output=True, text=True, timeout=180)
         must = [w.lower() for w in s.get("title_must_include") or []]
+        never = [w.lower() for w in s.get("title_must_exclude") or []]
         for line in out.stdout.splitlines():
             parts = line.split("|", 3)
             if len(parts) < 4:
                 continue
             vid, live, dur, title = parts
             if must and not any(w in title.lower() for w in must):
+                continue
+            if any(w in title.lower() for w in never):
                 continue
             if live in ("is_live", "is_upcoming"):
                 continue        # chat replay only exists once the stream ends
@@ -157,7 +182,9 @@ def from_queue(conn):
             vid, plat = "lf:" + hashlib.md5(url.encode()).hexdigest()[:12], "local"
         upsert_vod(conn, vid, src, url, platform=plat,
                    streamer=it.get("streamer") or src.get("streamer"),
-                   max_clips=it.get("max_clips"))
+                   max_clips=it.get("max_clips"),
+                   created_at=it.get("recorded"),
+                   trusted=not it.get("recorded"))
         n += 1
     conn.commit()
     return n
@@ -167,7 +194,7 @@ def collect():
     conf = cfg()
     conn = db()
     n = from_queue(conn) + from_twitch(conn, conf) + from_youtube_channels(conn)
-    pend = conn.execute("SELECT lane, COUNT(*) FROM vods WHERE state!='done' "
+    pend = conn.execute("SELECT lane, COUNT(*) FROM vods WHERE state IN ('new','scanning') "
                         "GROUP BY lane").fetchall()
     log.info("VOD sources: %d seen | pending by lane: %s", n, dict(pend))
     return n

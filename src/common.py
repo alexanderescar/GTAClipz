@@ -129,8 +129,32 @@ def db():
             conn.execute(f"ALTER TABLE clips ADD COLUMN {col} {decl}")
         except sqlite3.OperationalError:
             pass  # already there
+    try:
+        conn.execute("ALTER TABLE vods ADD COLUMN created_at TEXT")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     return conn
+
+
+def footage_ok(source, created_iso):
+    """Campaign briefs limit WHICH footage counts (e.g. 'marathon only').
+    created_iso: when the footage was recorded/published (ISO 8601)."""
+    import datetime as _dt
+    after, before = source.get("footage_after"), source.get("footage_before")
+    if not (after or before):
+        return True
+    try:
+        t = _dt.datetime.fromisoformat(str(created_iso).replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=_dt.timezone.utc)
+    if after and t < _dt.datetime.fromisoformat(str(after)):
+        return False
+    if before and t > _dt.datetime.fromisoformat(str(before)):
+        return False
+    return True
 
 
 def lane_for(source):
