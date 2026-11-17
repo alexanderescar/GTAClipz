@@ -1,0 +1,197 @@
+"""
+Long-form clipper: turn pending VODs into short candidate clips.
+
+Per VOD, per run:
+  1. scan the next chunk (chat if available, otherwise audio)
+  2. rank the moments
+  3. download ONLY those windows (yt-dlp --download-sections), never the
+     whole 8-hour video — that's what keeps this inside a free cloud runner
+  4. measure each window's audio lift; real moments get a score boost
+  5. hand the windows to the normal render stage as clips
+
+Growing VODs (a streamer still live, e.g. a 100% marathon) are scanned
+incrementally: we remember how far we got and pick up from there next run.
+"""
+import datetime as dt
+import pathlib
+import re
+import subprocess
+
+import chat
+import highlights
+from common import WORK, cfg, db, log
+
+SAFE = re.compile(r"[^A-Za-z0-9_.-]")
+
+
+def cut_window(src, start, end, dst):
+    """Fetch only [start, end] of a video. URLs via yt-dlp, files via ffmpeg."""
+    dst = pathlib.Path(dst)
+    if re.match(r"https?://", str(src)):
+        subprocess.run(
+            ["yt-dlp", "-q", "--no-warnings",
+             "-f", "bv*[height<=1080]+ba/b[height<=1080]/b",
+             "--download-sections", f"*{start:.0f}-{end:.0f}",
+             "--force-keyframes-at-cuts", "--merge-output-format", "mp4",
+             "-o", str(dst), str(src)],
+            check=True, capture_output=True, text=True, timeout=600,
+        )
+    else:
+        subprocess.run(
+            ["ffmpeg", "-y", "-v", "error", "-ss", f"{start:.2f}", "-t",
+             f"{end - start:.2f}", "-i", str(src), "-c:v", "libx264",
+             "-preset", "veryfast", "-c:a", "aac", str(dst)],
+            check=True, capture_output=True, text=True, timeout=600,
+        )
+    return dst
+
+
+def remote_duration(url):
+    out = subprocess.run(["yt-dlp", "--print", "duration", "--skip-download", url],
+                         capture_output=True, text=True, timeout=120)
+    try:
+        return float(out.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        return 0.0
+
+
+def media_url(url):
+    """ffmpeg can't read a YouTube/Kick watch page; resolve the audio stream."""
+    if not re.match(r"https?://", str(url)):
+        return url
+    out = subprocess.run(["yt-dlp", "-g", "-f", "ba/b", url],
+                         capture_output=True, text=True, timeout=120, check=True)
+    return out.stdout.strip().splitlines()[0]
+
+
+def cached_youtube_chat(v):
+    """A 24h stream's chat is huge — download it once, reuse for every chunk."""
+    import json
+    cache = WORK / "render" / (SAFE.sub("_", v["vod_id"]) + ".chat.json")
+    if cache.exists():
+        return [tuple(x) for x in json.loads(cache.read_text())]
+    comments = chat.youtube_chat(v["url"])
+    cache.write_text(json.dumps(comments))
+    return comments
+
+
+def scouted_today(conn, streamer):
+    return conn.execute(
+        "SELECT COUNT(*) FROM clips WHERE lane='scout' AND streamer=? "
+        "AND date(first_seen)=date('now')", (streamer,)).fetchone()[0]
+
+
+def find_windows(v, start, end, lf):
+    """Chat first; fall back to audio when there is no chat replay."""
+    common = dict(top_n=lf["max_moments_per_chunk"], offset=0.0)
+    comments = []
+    try:
+        if v["platform"] == "twitch":
+            comments = chat.twitch_chat(v["vod_id"].split(":", 1)[1], start, end)
+        elif v["platform"] == "youtube":
+            comments = cached_youtube_chat(v)
+    except Exception as e:  # noqa: BLE001
+        log.warning("chat unavailable for %s (%s) — using audio", v["vod_id"], e)
+
+    if len(comments) >= lf["min_chat_messages"]:
+        # Offsets are normally absolute VOD seconds. If a trimmed download came
+        # back relative to the trim point, every offset sits below `start`.
+        if start > 0 and max(t for t, _ in comments) < start:
+            comments = [(t + start, m) for t, m in comments]
+        shifted = [(t - start, m) for t, m in comments if start <= t < end]
+        ws = highlights.chat_spikes(
+            shifted, end - start, min_ratio=lf["chat_min_ratio"],
+            pre_roll=lf["pre_roll_s"], clip_len=lf["clip_len_s"],
+            **{**common, "offset": start})
+        return ws
+    levels = highlights.loudness_per_second(media_url(v["url"]), start, end - start)
+    return highlights.audio_peaks(levels, clip_len=lf["clip_len_s"],
+                                  **{**common, "offset": start})
+
+
+def process_vod(conn, v, conf):
+    lf = conf["longform"]
+    sc = conf["scouting"]
+    dur = v["duration"] or 0
+    if v["platform"] in ("local",) and not dur:
+        from transform import probe
+        dur = probe(v["url"])["duration"]
+    elif not dur and v["platform"] != "twitch":
+        dur = remote_duration(v["url"])
+        if dur:
+            conn.execute("UPDATE vods SET duration=? WHERE vod_id=?",
+                         (dur, v["vod_id"]))
+
+    # leave a safety margin on a still-growing VOD
+    horizon = dur - (lf["live_margin_s"] if v["is_live"] else 0)
+    start = v["processed_to"] or 0
+    if horizon - start < lf["min_chunk_s"]:
+        return 0
+    end = min(horizon, start + lf["max_chunk_s"])
+    log.info("scan %s [%s] %s %.0f→%.0fs", v["vod_id"], v["lane"],
+             v["streamer"], start, end)
+
+    windows = find_windows(v, start, end, lf)
+
+    limit = v["max_clips"] or lf["max_clips_per_chunk"]
+    if v["lane"] == "scout":
+        limit = max(0, sc["clips_per_streamer_per_day"] -
+                    scouted_today(conn, v["streamer"]))
+    made = 0
+    for w in windows[:limit]:
+        cid = f"{v['vod_id']}@{int(w.start)}"
+        if conn.execute("SELECT 1 FROM clips WHERE clip_id=?", (cid,)).fetchone():
+            continue
+        dst = WORK / "raw" / (SAFE.sub("_", cid) + ".mp4")
+        try:
+            cut_window(v["url"], w.start, w.end, dst)
+            lift = highlights.audio_lift(dst) if w.kind == "vod_chat" else w.audio_lift
+        except Exception as e:  # noqa: BLE001
+            log.error("window download failed %s: %s", cid, e)
+            continue
+        score = round(w.score * (1 + max(0.0, lift) / 20), 2)
+        conn.execute(
+            """INSERT INTO clips (clip_id, source_id, streamer, platform, title,
+                url, views, duration, created_at, score, state, lane, source_kind,
+                chat_ratio, audio_lift, vod_id, vod_start, chat_top)
+               VALUES (?,?,?,?,?,?,?,?,?,?,'downloaded',?,?,?,?,?,?,?)""",
+            (cid, v["source_id"], v["streamer"], "vod", v["title"], str(dst), 0,
+             w.length, dt.datetime.now(dt.timezone.utc).isoformat(), score,
+             v["lane"], w.kind, w.ratio, lift, v["vod_id"], w.start, w.top_chat),
+        )
+        made += 1
+
+    done = (not v["is_live"]) and end >= horizon - 1
+    conn.execute(
+        "UPDATE vods SET processed_to=?, clips_made=clips_made+?, state=?, "
+        "updated_at=CURRENT_TIMESTAMP WHERE vod_id=?",
+        (end, made, "done" if done else "scanning", v["vod_id"]))
+    conn.commit()
+    log.info("  -> %d windows found, %d clips cut", len(windows), made)
+    return made
+
+
+def run():
+    conf = cfg()
+    conn = db()
+    conn.row_factory = __import__("sqlite3").Row
+    # publish lane first: those are the clips that can make money
+    todo = conn.execute(
+        "SELECT * FROM vods WHERE state!='done' ORDER BY "
+        "CASE lane WHEN 'publish' THEN 0 ELSE 1 END, updated_at LIMIT ?",
+        (conf["longform"]["max_vods_per_run"],)).fetchall()
+    total = 0
+    for v in todo:
+        try:
+            total += process_vod(conn, v, conf)
+        except Exception as e:  # noqa: BLE001
+            log.error("VOD %s failed: %s", v["vod_id"], e)
+            conn.execute("UPDATE vods SET state='error' WHERE vod_id=?",
+                         (v["vod_id"],))
+            conn.commit()
+    log.info("long-form: %d clips cut this run", total)
+    return total
+
+
+if __name__ == "__main__":
+    run()

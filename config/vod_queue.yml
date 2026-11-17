@@ -1,0 +1,20 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# MANUAL VOD QUEUE — paste any long video here and the long-form clipper will
+# find its best moments on the next run.
+#
+#   url:        Twitch VOD, YouTube video/stream, Kick VOD, or a local path
+#   source_id:  must match an id in sources.yml (decides permission + lane).
+#               Use "manual_scout" for anything you DON'T have rights to yet:
+#               it gets proof-of-concept clips for outreach, never published.
+#   streamer:   optional display name (used in credits and outreach)
+#   max_clips:  optional cap for this video
+#
+# Processed entries are remembered in state/, so leaving them here is harmless.
+# ─────────────────────────────────────────────────────────────────────────────
+queue:
+  # - url: "https://www.youtube.com/watch?v=XXXXXXXXXXX"   # YouTube x Rockstar 24h stream
+  #   source_id: manual_scout
+  #   max_clips: 15
+  #
+  # - url: "https://www.twitch.tv/videos/1234567890"        # campaign-supplied VOD
+  #   source_id: cr_lysium_benji_ramos

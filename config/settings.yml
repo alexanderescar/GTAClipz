@@ -1,0 +1,133 @@
+# ── Game / discovery ────────────────────────────────────────────────────────
+game:
+  twitch_game_name: "Grand Theft Auto VI"
+  twitch_game_id: ""        # auto-resolved on first run, then cached here
+  youtube_query: "GTA 6 gameplay"
+
+discovery:
+  lookback_hours: 6         # launch week: drop to 3, the firehose is dense
+  max_candidates: 120
+  per_source_cap: 15        # don't let one streamer dominate a day's output
+
+# ── Scoring: which clips are worth rendering ───────────────────────────────
+# score = views-per-hour × duration-fit × title-signal
+scoring:
+  duration_sweet_spot: [15, 45]    # seconds
+  title_boost_keywords:
+    - "first"
+    - "wtf"
+    - "no way"
+    - "insane"
+    - "glitch"
+    - "secret"
+    - "easter egg"
+    - "how did"
+    - "rip"
+    - "fail"
+  # Rockstar removes all of these. Rendering one spends a slot on a takedown.
+  title_penalty_keywords:
+    - "ending"
+    - "final mission"
+    - "cutscene"        # isolated cinematics get removed
+    - "full story"
+    - "spoiler"
+    - "leak"
+    - "mod menu"        # cheat / mod content is explicitly prohibited
+    - "money glitch"
+  # GTA radio plays REAL licensed tracks owned by labels, not by Rockstar.
+  # A clip that is mostly radio music draws a Content ID claim and the revenue
+  # goes to the label. Clips where the streamer is TALKING are better on two
+  # counts: Whisper has something to caption, and speech masks the radio.
+  music_risk_keywords:
+    - "radio"
+    - "song"
+    - "singing"
+    - "banger"
+
+# ── Render ────────────────────────────────────────────────────────────────
+render:
+  width: 1080
+  height: 1920
+  fps: 30
+  video_bitrate: "6M"
+  audio_bitrate: "160k"
+  layout: "blur_pad"        # blur_pad | center_crop | gameplay_top
+  loudnorm: true            # -14 LUFS, matches platform targets
+  hook_card:
+    enabled: true
+    duration: 1.2
+    # Graphic violence inside the first 7s is NOT ad-eligible on YouTube.
+    # The hook card exists partly to push gameplay past that boundary.
+  captions:
+    enabled: true
+    model: "base.en"        # tiny.en if CPU-bound; base.en is the sweet spot
+    style: "karaoke"
+    font_size: 64
+    max_chars_per_line: 22
+    y_position: 0.68        # keeps clear of platform UI chrome
+  watermark:
+    enabled: true
+    text: "@gtavicecityclipzz"   # your own branding is fine and does NOT hurt reach
+    opacity: 0.55
+
+# ── Safety gates (hard stops, not suggestions) ────────────────────────────
+safety:
+  require_permission: true          # refuse to publish permission: none
+  block_first_7s_graphic: true      # YouTube ad-eligibility boundary
+  strip_source_watermarks: true     # another platform's logo kills reach
+  skip_if_phash_seen: true          # never post the same moment twice
+  max_posts_per_platform_per_day:
+    youtube: 8
+    tiktok: 6
+    instagram: 6
+
+# ── Publishing ────────────────────────────────────────────────────────────
+publish:
+  youtube:
+    enabled: true
+    privacy: "public"
+    category_id: "20"       # Gaming
+    made_for_kids: false
+  instagram:
+    enabled: true
+    share_to_feed: true
+  tiktok:
+    enabled: true
+    mode: "inbox_draft"     # inbox_draft | direct_post (direct needs the audit)
+  # Stagger rather than dump: looks human, spreads the test across the day
+  schedule_offsets_minutes: [0, 95, 190, 310, 430, 560, 700, 840]
+
+storage:
+  r2_bucket: "gta6-clips"
+  r2_public_base: ""        # e.g. https://clips.yourdomain.com  (Instagram needs it)
+  keep_renders_days: 3
+
+# ── Long-form clipper (VOD -> moments) ────────────────────────────────────
+longform:
+  enabled: true
+  max_vods_per_run: 3
+  max_chunk_s: 14400        # scan at most 4h of a VOD per run (chat download time)
+  min_chunk_s: 600          # don't bother scanning <10 min of new footage
+  live_margin_s: 300        # stay 5 min behind the live edge of a growing VOD
+  min_chat_messages: 200    # below this, chat is too thin -> audio fallback
+  chat_min_ratio: 3.0       # a bin must be 3x the trailing 5-min median
+  max_moments_per_chunk: 12
+  max_clips_per_chunk: 6    # publish lane: clips cut per VOD chunk
+  pre_roll_s: 30            # chat reacts late; start the clip before the spike
+  clip_len_s: 45
+
+# ── Scouting lane (no permission yet -> proof clips for outreach) ─────────
+scouting:
+  clips_per_streamer_per_day: 2
+  auto_discover: true       # source 4: biggest live GTA 6 streams we don't track
+  auto_discover_top: 5
+  r2_prefix: "scout/"       # proof clips uploaded here so you can link them in DMs
+
+# ── Approval queue (week one: you approve; then it learns your taste) ─────
+review:
+  mode: "manual"            # manual | auto
+  auto_switch_after: "2026-11-25"   # switch to auto on this date IF...
+  min_decisions: 40                 # ...you've made at least this many decisions
+  target_approval_rate: 0.80        # auto threshold = where you approved >=80%
+  expire_hours: 36          # unanswered clips expire (stale by then anyway)
+  issue_label: "clip-review"

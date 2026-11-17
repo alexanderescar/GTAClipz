@@ -1,0 +1,123 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SOURCE REGISTRY  (researched 2026-11-17 — programs open/close weekly; recheck)
+# ─────────────────────────────────────────────────────────────────────────────
+# permission:
+#   campaign  - you joined a paid clipping campaign; the brief IS the license.
+#               Covers ONLY what the brief covers (e.g. a brand campaign covers
+#               that brand's clips, not the creator's whole stream).
+#   granted   - explicit yes in writing (DM/email). Save evidence.
+#   published - public clip rules allowing reposts with credit. Link them.
+#   own       - your own capture.
+#   none      - SCOUTING LANE: discovered, scored, a few proof-of-concept clips
+#               rendered for outreach — never published.
+#
+# lane is derived: publishable permission -> "publish", none -> "scout".
+# Flip enabled:true on a campaign only AFTER you've joined it.
+# Twitch logins marked (verify) — confirm on twitch.tv before relying on them.
+# ─────────────────────────────────────────────────────────────────────────────
+
+defaults:
+  credit_template: "🎥 {streamer} — {link}"
+  min_views: 500
+  # HARD CAP at 59s. A YouTube Short LONGER than 60 seconds with ANY Content ID
+  # claim is blocked WORLDWIDE. GTA radio is licensed music (real labels, not
+  # Rockstar), so claims are near-certain on any clip with the radio audible.
+  # Under 60s a claim only redirects revenue; over 60s the clip dies entirely.
+  max_clip_seconds: 59
+  min_clip_seconds: 8
+
+sources:
+
+  # ── OPEN GTA CAMPAIGNS (join on contentrewards.com, then enable) ──────────
+  - id: cr_lysium_benji_ramos
+    platform: campaign
+    streamer: "Lysium / Benji Ramos"
+    permission: campaign
+    campaign_url: "https://contentrewards.com"     # search "Lysium" on Discover
+    rate_per_1k_usd: 1.50
+    notes: "GTA roleplay streamer campaign. Read the brief for required tags."
+    platforms_allowed: [youtube, tiktok, instagram]
+    longform: true            # campaigns hand you footage -> long-form clipper
+    enabled: false
+
+  - id: cr_gta6_tokyo_girl
+    platform: campaign
+    streamer: "GTA 6 – Tokyo Girl (music)"
+    permission: campaign
+    campaign_url: "https://contentrewards.com/articles/gta-6-clipping"
+    rate_per_1k_usd: 0.70
+    notes: "Music campaign. TikTok + Instagram ONLY. Usually 'use this sound'."
+    platforms_allowed: [tiktok, instagram]
+    enabled: false
+
+  # ── STREAMERS WITH PAID PROGRAMS (join, then flip permission+enabled) ─────
+  - id: kaicenat
+    platform: twitch
+    streamer: "Kai Cenat"
+    twitch_login: "kaicenat"
+    link: "twitch.tv/kaicenat"
+    permission: none          # -> campaign once you join a live Content Rewards pool
+    notes: "Marathoning GTA 6 to 100% from launch. Pool campaigns (~$10K) on Content Rewards."
+    longform: true
+    enabled: true
+
+  - id: lacy
+    platform: twitch
+    streamer: "Lacy"
+    twitch_login: "lacy"      # (verify)
+    link: "twitch.tv/lacy"
+    permission: none          # -> campaign once you join his program on Reach
+    notes: "Own program on Reach, ~$25K pool."
+    longform: true
+    enabled: true
+
+  - id: jasontheween
+    platform: twitch
+    streamer: "JasonTheWeen"
+    twitch_login: "jasontheween"
+    link: "twitch.tv/jasontheween"
+    permission: none          # CORE pool campaign on Content Rewards
+    longform: true
+    enabled: true
+
+  # ── NO PUBLIC PROGRAM — scouting lane + outreach targets ──────────────────
+  - id: xqc
+    platform: twitch
+    streamer: "xQc"
+    twitch_login: "xqc"
+    link: "twitch.tv/xqc"
+    permission: none
+    longform: true
+    enabled: true
+
+  - id: caseoh
+    platform: twitch
+    streamer: "CaseOh"
+    twitch_login: "caseoh_"   # (verify)
+    link: "twitch.tv/caseoh_"
+    permission: none
+    longform: true
+    enabled: true
+
+  - id: agent00
+    platform: twitch
+    streamer: "Agent00"
+    twitch_login: "agent00"   # (verify)
+    link: "twitch.tv/agent00"
+    permission: none
+    longform: true
+    enabled: true
+
+  # ── YOUTUBE x ROCKSTAR 24H LAUNCH STREAM — add the VOD link to vod_queue ──
+  #    once it exists. Roster: Caylus, Zhong, Kat Buno, Jelly, Rivers,
+  #    Jake Baldino, Cinna, Loserfruit (AU), JuanSGuarnizo (MX),
+  #    GamerCosta (BR), MikeShowSha (IT), Any Austin. Best ask-first targets.
+
+  # ── YOUR OWN CAPTURE — always publishable ─────────────────────────────────
+  - id: own_capture
+    platform: local
+    streamer: "You"
+    permission: own
+    watch_dir: "work/raw/own"
+    platforms_allowed: [youtube, tiktok, instagram]
+    enabled: true
