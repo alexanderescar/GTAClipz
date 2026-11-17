@@ -35,28 +35,32 @@ def delete(key, bucket):
 
 
 def selftest():
-    """Upload a tiny file, fetch it back over the public URL, delete it."""
+    """Upload a small file and fetch it back over the public URL the way
+    different clients would. Leaves selftest/check.txt in place so you can
+    open it in a browser."""
     import time
     import urllib.request
     from common import cfg
     st = cfg()["storage"]
-    key = f"selftest/{int(time.time())}.txt"
+    key = "selftest/check.txt"
     path = "/tmp/r2_selftest.txt"
     with open(path, "w") as fh:
-        fh.write("gtaclipz r2 ok\n")
+        fh.write(f"gtaclipz r2 ok {int(time.time())}\n")
     client().upload_file(path, st["r2_bucket"], key,
                          ExtraArgs={"ContentType": "text/plain"})
     print("  upload: OK")
     url = f"{st['r2_public_base'].rstrip('/')}/{key}"
-    for attempt in range(5):
+    print(f"  open this in your browser: {url}")
+    agents = {
+        "python default": None,
+        "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                   "(KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+        "instagram fetcher": "facebookexternalhit/1.1",
+    }
+    for name, ua in agents.items():
+        req = urllib.request.Request(url, headers={"User-Agent": ua} if ua else {})
         try:
-            body = urllib.request.urlopen(url, timeout=20).read().decode()
-            print(f"  public fetch: OK ({body.strip()!r}) via {url}")
-            break
+            body = urllib.request.urlopen(req, timeout=20).read().decode().strip()
+            print(f"  fetch as {name:<18} OK  ({body!r})")
         except Exception as e:  # noqa: BLE001
-            print(f"  public fetch attempt {attempt + 1} failed: {e}")
-            time.sleep(4)
-    else:
-        print("  public fetch: FAILED — check 'Public Development URL' is enabled")
-    delete(key, st["r2_bucket"])
-    print("  cleanup: OK")
+            print(f"  fetch as {name:<18} FAILED  {e}")
