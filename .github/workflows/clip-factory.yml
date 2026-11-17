@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "run | status | r2test | twitchtest | igtest | yttest | discover | vods | longform | download | render | review | publish"
+        description: "run | status | r2test | twitchtest | igtest | yttest | tiktoktest | discover | vods | longform | download | render | review | publish"
         default: "run"
 
 permissions:
@@ -67,7 +67,9 @@ jobs:
           TWITCH_CLIENT_SECRET:  ${{ secrets.TWITCH_CLIENT_SECRET }}
           IG_USER_ID:            ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN:       ${{ secrets.IG_ACCESS_TOKEN }}
-          TIKTOK_ACCESS_TOKEN:   ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          TIKTOK_CLIENT_KEY:     ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET:  ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_REFRESH_TOKEN:  ${{ secrets.TIKTOK_REFRESH_TOKEN }}
           R2_ACCOUNT_ID:         ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID:      ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY:  ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -81,7 +83,7 @@ jobs:
         run: |
           git config user.name  "clip-factory"
           git config user.email "actions@users.noreply.github.com"
-          git add state/factory.db config/settings.yml || true
+          for f in state/factory.db state/tiktok.enc config/settings.yml; do [ -e "$f" ] && git add "$f"; done
           git diff --staged --quiet || git commit -m "state: $(date -u +%FT%TZ) [skip ci]"
           git push || echo "nothing to push"
 

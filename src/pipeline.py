@@ -200,7 +200,8 @@ def _send(target, path, m, conf, clip):
                                          conf["publish"]["instagram"]["share_to_feed"])
     if target == "tiktok":
         import publish_tiktok
-        return publish_tiktok.upload(path, m["caption"], os.environ["TIKTOK_ACCESS_TOKEN"],
+        import tiktok_auth
+        return publish_tiktok.upload(path, m["caption"], tiktok_auth.access_token(),
                                      mode=conf["publish"]["tiktok"]["mode"])
     raise ValueError(target)
 
@@ -241,6 +242,9 @@ def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "run"
     if mode == "status":
         return status(conn)
+    if mode == "tiktoktest":
+        import tiktok_auth
+        return tiktok_auth.selftest()
     if mode == "yttest":
         import publish_youtube
         return publish_youtube.selftest()
