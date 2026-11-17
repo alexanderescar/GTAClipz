@@ -153,6 +153,33 @@ def stage_render(conn, conf):
 
 
 # ── publish ──────────────────────────────────────────────────────────────────
+def ensure_local(c, conf):
+    """The run that rendered a clip is long gone by the time it's approved;
+    the file lives on in R2, so bring it back before uploading."""
+    path = pathlib.Path(c["render_path"] or "")
+    if path.is_file():
+        return str(path)
+    if not c["preview_url"]:
+        raise RuntimeError("render missing and no R2 copy")
+    import r2
+    st = conf["storage"]
+    dest = WORK / "render" / f"{safe(c['clip_id'])}.mp4"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    r2.fetch(c["preview_url"], st["r2_public_base"], st["r2_bucket"], dest)
+    return str(dest)
+
+
+def in_campaign_hours(conf, now=None):
+    from zoneinfo import ZoneInfo
+    h = conf["publish"].get("campaign_hours")
+    if not h:
+        return True
+    local = (now or dt.datetime.now(dt.timezone.utc)).astimezone(ZoneInfo(h["timezone"]))
+    t = local.strftime("%H:%M")
+    return h["start"] <= t < h["end"] if h["start"] < h["end"] else \
+        (t >= h["start"] or t < h["end"])
+
+
 def stage_publish(conn, conf):
     caps = conf["safety"]["max_posts_per_platform_per_day"]
     for c in rows(conn, "SELECT * FROM clips WHERE state='approved' AND "
@@ -170,6 +197,13 @@ def stage_publish(conn, conf):
             conn.execute("UPDATE clips SET state='campaign_closed' WHERE clip_id=?",
                          (c["clip_id"],))
             continue
+        if src.get("permission") == "campaign" and not in_campaign_hours(conf):
+            continue                    # you'd miss the 30-min submit window
+        try:
+            local = ensure_local(c, conf)
+        except Exception as e:  # noqa: BLE001
+            log.error("can't fetch render for %s: %s", c["clip_id"], e)
+            continue
         credit = (src.get("credit_template")
                   or cfg("sources")["defaults"]["credit_template"]).format(
             streamer=c["streamer"] or src.get("streamer", ""),
@@ -185,7 +219,7 @@ def stage_publish(conn, conf):
             m = metadata.build(dict(c), target, credit, hook=c["note"],
                                extra_tags=src.get("hashtags"))
             try:
-                res = _send(target, c["render_path"], m, conf, c,
+                res = _send(target, local, m, conf, c,
                             paid=bool(src.get("paid_promotion")))
                 conn.execute("INSERT INTO posts (clip_id,target,remote_id,url,status) "
                              "VALUES (?,?,?,?,'ok')",
@@ -206,7 +240,9 @@ def stage_publish(conn, conf):
 def submit_now_alert(c, src, posted):
     """Campaigns only pay if each post link is submitted within 30 minutes.
     Comment on the clip's review issue so GitHub pushes it to your phone."""
+    owner = (os.environ.get("GITHUB_REPOSITORY") or "/").split("/")[0]
     lines = [f"### 🚨 SUBMIT NOW — {src.get('campaign', src['id'])}",
+             f"@{owner}" if owner else "",
              f"Posted just now. Submit within **30 minutes**: {src.get('campaign_url', '')}",
              ""]
     for target, url, status in posted:
@@ -301,10 +337,15 @@ def main():
     if mode == "twitchtest":
         import discover
         return discover.selftest()
+    if mode == "kicktest":
+        import kick
+        return kick.selftest()
     if mode == "r2test":
         import r2
         return r2.selftest()
-    want = STAGES if mode == "run" else [mode]
+    # "approve" = the quick check between full runs: read your ticks, post
+    want = (STAGES if mode == "run" else
+            ["review", "publish"] if mode == "approve" else [mode])
     for st in want:
         try:
             if st == "discover":

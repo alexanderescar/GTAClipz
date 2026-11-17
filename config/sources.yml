@@ -92,8 +92,8 @@ sources:
     hooks:
       - "Dasgas Dom plays GTA 6"
       - "Dasgas Dom's GTA 6 reaction"
-    # Footage: ONLY his Nov 19 Kick stream. Paste the VOD link into
-    # config/vod_queue.yml with source_id: cr_ruckus_dom after the stream ends.
+    # Footage: ONLY his Nov 19 Kick stream. The robot finds it on Kick by itself
+    # once the stream ends; if Kick blocks it, paste the link into vod_queue.yml.
     publish_after: "2026-11-19T09:00:00-08:00"
     footage_after: "2026-11-19T00:00:00-08:00"   # brief: ONLY his Nov 19 stream
     footage_before: "2026-11-20T12:00:00-08:00"

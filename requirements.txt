@@ -4,7 +4,8 @@ PyYAML==6.0.2
 python-dotenv==1.0.1
 
 # Clip download
-yt-dlp>=2026.10.0
+yt-dlp[default,curl-cffi]>=2026.10.0
+curl_cffi
 
 # Captions (CPU-friendly; tiny/base models run fine on a free cloud box)
 faster-whisper==1.0.3

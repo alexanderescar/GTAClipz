@@ -53,10 +53,13 @@ def todays_issue(label):
                                              "per_page": 30}):
         if iss["title"] == title:
             return iss
+    owner = os.environ.get("GITHUB_REPOSITORY", "/").split("/")[0]
     return _gh("POST", "/issues", json={
-        "title": title, "labels": [label],
+        "title": title, "labels": [label], "assignees": [owner],
         "body": ("Tick ✅ to post a clip, ❌ to drop it. Untouched clips expire.\n"
-                 "The next pipeline run (≤30 min) picks up your choices.\n\n")})
+                 "Your ticks are picked up on the next run. Campaign clips "
+                 "post during your campaign hours (settings.yml) so you can "
+                 "submit the link in time.\n\n")})
 
 
 # ── rendering a clip as markdown ─────────────────────────────────────────────

@@ -30,6 +30,13 @@ def put_public(path, key, bucket, public_base):
     return url
 
 
+def fetch(url, public_base, bucket, dest):
+    """Pull a clip we uploaded earlier back down (each cloud run starts empty)."""
+    key = url[len(public_base.rstrip("/")) + 1:]
+    client().download_file(bucket, key, str(dest))
+    return dest
+
+
 def delete(key, bucket):
     client().delete_object(Bucket=bucket, Key=key)
 

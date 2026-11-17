@@ -95,6 +95,12 @@ publish:
   tiktok:
     enabled: true
     mode: "inbox_draft"     # inbox_draft | direct_post (direct needs the audit)
+  # Campaign clips only go live when you can submit the link within 30 min.
+  # Approved clips wait (in order) until the window opens. Edit to your day.
+  campaign_hours:
+    timezone: "America/New_York"
+    start: "08:00"
+    end: "23:00"
   # Stagger rather than dump: looks human, spreads the test across the day
   schedule_offsets_minutes: [0, 95, 190, 310, 430, 560, 700, 840]
 

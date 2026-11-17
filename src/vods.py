@@ -190,10 +190,36 @@ def from_queue(conn):
     return n
 
 
+def from_kick(conn):
+    """Kick channels in sources.yml with longform: true. Finished streams only
+    (no chat replay on Kick, so moments come from audio peaks)."""
+    import kick
+    n = 0
+    for s in sources():
+        if s.get("platform") != "kick" or not s.get("longform"):
+            continue
+        slug = kick.slug_of(s)
+        try:
+            vs = kick.videos(slug)
+        except Exception as e:  # noqa: BLE001
+            log.warning("Kick %s unreachable (%s) — use vod_queue.yml", slug, e)
+            continue
+        for v in vs:
+            if v["is_live"]:
+                continue
+            upsert_vod(conn, "kk:" + v["id"], s, v["url"], platform="kick",
+                       title=v["title"], duration=v["duration_s"],
+                       created_at=v["created_at"])
+            n += 1
+    conn.commit()
+    return n
+
+
 def collect():
     conf = cfg()
     conn = db()
-    n = from_queue(conn) + from_twitch(conn, conf) + from_youtube_channels(conn)
+    n = (from_queue(conn) + from_twitch(conn, conf) + from_youtube_channels(conn)
+         + from_kick(conn))
     pend = conn.execute("SELECT lane, COUNT(*) FROM vods WHERE state IN ('new','scanning') "
                         "GROUP BY lane").fetchall()
     log.info("VOD sources: %d seen | pending by lane: %s", n, dict(pend))
