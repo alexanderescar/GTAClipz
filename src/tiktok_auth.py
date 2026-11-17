@@ -95,11 +95,5 @@ def selftest():
                      headers={"Authorization": f"Bearer {tok}"}, timeout=30).json()
     print(f"  account: {(u.get('data') or {}).get('user', {}).get('display_name')} "
           f"| error: {(u.get('error') or {}).get('code')}")
-    c = requests.post("https://open.tiktokapis.com/v2/post/publish/creator_info/query/",
-                      headers={"Authorization": f"Bearer {tok}",
-                               "Content-Type": "application/json; charset=UTF-8"},
-                      timeout=30).json()
-    cd = c.get("data") or {}
-    print(f"  posting check: {(c.get('error') or {}).get('code')} | "
-          f"privacy options: {cd.get('privacy_level_options')} | "
-          f"max video length: {cd.get('max_video_post_duration_sec')}s")
+    ok = "video.upload" in (d.get("scope") or "")
+    print(f"  draft uploads: {'ALLOWED (video.upload granted)' if ok else 'NOT granted'}")
