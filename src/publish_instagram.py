@@ -106,6 +106,21 @@ def selftest():
         print("  IG_USER_ID / IG_ACCESS_TOKEN not set")
         return
     host = graph_for(tok)
+    uid = uid.strip()
+    print(f"  IG_USER_ID length {len(uid)}, digits only: {uid.isdigit()}")
+    if tok.startswith("EAA"):
+        dbg = requests.get("https://graph.facebook.com/debug_token", params={
+            "input_token": tok, "access_token": tok}, timeout=30).json()
+        info = dbg.get("data") or {}
+        print(f"  token valid: {info.get('is_valid')} | type: {info.get('type')} | "
+              f"app: {info.get('application')}")
+        for g in info.get("granular_scopes", []):
+            print(f"  scope {g.get('scope'):<32} assets: {g.get('target_ids', 'all')}")
+        if dbg.get("error"):
+            print(f"  debug_token error: {dbg['error'].get('message')}")
+        me = requests.get(f"{host}/me", params={"fields": "id,name",
+                          "access_token": tok}, timeout=30).json()
+        print(f"  /me -> {me}")
     print(f"  token type: {'Unified/Facebook (EAA)' if tok.startswith('EAA') else 'Instagram login'}"
           f" -> {host.split('/')[2]}")
     r = requests.get(f"{host}/{uid}", params={
