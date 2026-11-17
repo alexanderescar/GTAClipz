@@ -64,7 +64,7 @@ sources:
   - id: lacy
     platform: twitch
     streamer: "Lacy"
-    twitch_login: "lacy"      # (verify)
+    twitch_login: "lacy"   
     link: "twitch.tv/lacy"
     permission: none          # -> campaign once you join his program on Reach
     notes: "Own program on Reach, ~$25K pool."
@@ -93,7 +93,7 @@ sources:
   - id: caseoh
     platform: twitch
     streamer: "CaseOh"
-    twitch_login: "caseoh_"   # (verify)
+    twitch_login: "caseoh_"
     link: "twitch.tv/caseoh_"
     permission: none
     longform: true
@@ -102,7 +102,7 @@ sources:
   - id: agent00
     platform: twitch
     streamer: "Agent00"
-    twitch_login: "agent00"   # (verify)
+    twitch_login: "agent00"
     link: "twitch.tv/agent00"
     permission: none
     longform: true

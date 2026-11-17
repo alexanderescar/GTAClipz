@@ -1,7 +1,7 @@
 # ── Game / discovery ────────────────────────────────────────────────────────
 game:
   twitch_game_name: "Grand Theft Auto VI"
-  twitch_game_id: ""        # auto-resolved on first run, then cached here
+  twitch_game_id: "1867279146"   # Grand Theft Auto VI, confirmed 2026-11-17
   youtube_query: "GTA 6 gameplay"
 
 discovery:
