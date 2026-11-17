@@ -106,11 +106,17 @@ def stage_render(conn, conf):
             conn.execute("UPDATE clips SET state='missing_file' WHERE clip_id=?",
                          (c["clip_id"],))
             continue
-        hook = metadata.make_hook(dict(c))
+        src = source_for(c)
+        hook = metadata.make_hook(dict(c), templates=src.get("hooks"))
+        rconf = conf
+        if src.get("watermark") is False:          # e.g. Lacy: "no logos"
+            import copy
+            rconf = copy.deepcopy(conf)
+            rconf["render"]["watermark"]["enabled"] = False
         out = WORK / "out" / f"{safe(c['clip_id'])}.mp4"
         try:
             dur = min(transform.probe(src_path)["duration"], cap)
-            transform.render(src_path, out, hook_text=hook, conf=conf, duration=dur)
+            transform.render(src_path, out, hook_text=hook, conf=rconf, duration=dur)
         except Exception as e:  # noqa: BLE001
             log.error("render failed %s: %s", c["clip_id"], e)
             conn.execute("UPDATE clips SET state='render_failed' WHERE clip_id=?",
@@ -156,24 +162,36 @@ def stage_publish(conn, conf):
             conn.execute("UPDATE clips SET state='blocked_no_permission' "
                          "WHERE clip_id=?", (c["clip_id"],))
             continue
+        now = dt.datetime.now(dt.timezone.utc)
+        after, before = src.get("publish_after"), src.get("publish_before")
+        if after and now < dt.datetime.fromisoformat(str(after)):
+            continue                    # campaign not open yet: stays approved
+        if before and now > dt.datetime.fromisoformat(str(before)):
+            conn.execute("UPDATE clips SET state='campaign_closed' WHERE clip_id=?",
+                         (c["clip_id"],))
+            continue
         credit = (src.get("credit_template")
                   or cfg("sources")["defaults"]["credit_template"]).format(
             streamer=c["streamer"] or src.get("streamer", ""),
             link=src.get("link", ""))
         allowed = set(src.get("platforms_allowed") or ["youtube", "tiktok", "instagram"])
         any_ok = False
+        posted = []
         for target in ("youtube", "instagram", "tiktok"):
             if target not in allowed or not conf["publish"][target]["enabled"]:
                 continue
             if posts_today(conn, target) >= caps[target]:
                 continue
-            m = metadata.build(dict(c), target, credit, hook=c["note"])
+            m = metadata.build(dict(c), target, credit, hook=c["note"],
+                               extra_tags=src.get("hashtags"))
             try:
-                res = _send(target, c["render_path"], m, conf, c)
+                res = _send(target, c["render_path"], m, conf, c,
+                            paid=bool(src.get("paid_promotion")))
                 conn.execute("INSERT INTO posts (clip_id,target,remote_id,url,status) "
                              "VALUES (?,?,?,?,'ok')",
                              (c["clip_id"], target, res.get("remote_id"), res.get("url")))
                 any_ok = True
+                posted.append((target, res.get("url") or "", res.get("status")))
             except Exception as e:  # noqa: BLE001
                 log.error("%s publish failed for %s: %s", target, c["clip_id"], e)
                 conn.execute("INSERT INTO posts (clip_id,target,status) VALUES (?,?,?)",
@@ -181,12 +199,38 @@ def stage_publish(conn, conf):
         conn.execute("UPDATE clips SET state=? WHERE clip_id=?",
                      ("published" if any_ok else "publish_failed", c["clip_id"]))
         conn.commit()
+        if posted and src.get("permission") == "campaign":
+            submit_now_alert(c, src, posted)
 
 
-def _send(target, path, m, conf, clip):
+def submit_now_alert(c, src, posted):
+    """Campaigns only pay if each post link is submitted within 30 minutes.
+    Comment on the clip's review issue so GitHub pushes it to your phone."""
+    lines = [f"### 🚨 SUBMIT NOW — {src.get('campaign', src['id'])}",
+             f"Posted just now. Submit within **30 minutes**: {src.get('campaign_url', '')}",
+             ""]
+    for target, url, status in posted:
+        if target == "tiktok":
+            lines.append("- **TikTok:** in your drafts. Post it from the app "
+                         "(turn on *Content disclosure → Paid partnership* if the "
+                         "campaign requires it), then submit that link.")
+        else:
+            lines.append(f"- **{target.title()}:** {url}")
+    lines.append(f"\n`{c['clip_id']}`")
+    try:
+        import review
+        if c["review_issue"]:
+            review._gh("POST", f"/issues/{c['review_issue']}/comments",
+                       json={"body": "\n".join(lines)})
+    except Exception as e:  # noqa: BLE001
+        log.warning("submit-now alert failed: %s", e)
+
+
+def _send(target, path, m, conf, clip, paid=False):
     if target == "youtube":
         import publish_youtube
-        return publish_youtube.upload(path, m["title"], m["description"], m["tags"], conf)
+        return publish_youtube.upload(path, m["title"], m["description"], m["tags"],
+                                      conf, paid=paid)
     if target == "instagram":
         import publish_instagram
         import r2

@@ -57,8 +57,11 @@ def clean(text):
     return text
 
 
-def make_hook(clip, seed=None):
+def make_hook(clip, seed=None, templates=None):
+    """Campaign sources pass their own neutral hooks (briefs ban fake context)."""
     rng = random.Random(seed or clip.get("clip_id"))
+    if templates:
+        return rng.choice(templates)
     pool = CHAT_HOOKS if (clip.get("chat_ratio") or 0) >= 6 else HOOKS
     t = rng.choice(pool)
     return t.format(
@@ -68,7 +71,7 @@ def make_hook(clip, seed=None):
     )
 
 
-def build(clip, platform, credit_line, hook=None):
+def build(clip, platform, credit_line, hook=None, extra_tags=None):
     hook = hook or make_hook(clip)
     rng = random.Random(clip.get("clip_id"))
 
@@ -78,8 +81,13 @@ def build(clip, platform, credit_line, hook=None):
 
     # Credit is not optional — it is half of why streamers say yes, and it is
     # what makes the clip free marketing for them rather than theft.
+    tags_line = HASHTAGS[platform]
+    if extra_tags:                       # campaign-required tags go first
+        have = tags_line.lower().split()
+        tags_line = " ".join([t for t in extra_tags if t.lower() not in have]
+                             + [tags_line])
     desc_parts = [hook, "", credit_line, f"Daily GTA 6 clips: follow {HANDLE}",
-                  "", HASHTAGS[platform]]
+                  "", tags_line]
     description = "\n".join(desc_parts)
 
     tags = BASE_TAGS + [
@@ -91,5 +99,5 @@ def build(clip, platform, credit_line, hook=None):
         "title": title[:100],
         "description": description,
         "tags": tags,
-        "caption": f"{hook}\n\n{credit_line}\n\n{HASHTAGS[platform]}",
+        "caption": f"{hook}\n\n{credit_line}\n\n{tags_line}",
     }

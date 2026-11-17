@@ -40,7 +40,7 @@ def client():
     return build("youtube", "v3", credentials=creds, cache_discovery=False)
 
 
-def upload(path, title, description, tags, conf, publish_at=None):
+def upload(path, title, description, tags, conf, publish_at=None, paid=False):
     yt = conf["publish"]["youtube"]
     body = {
         "snippet": {
@@ -59,9 +59,13 @@ def upload(path, title, description, tags, conf, publish_at=None):
         body["status"]["privacyStatus"] = "private"
         body["status"]["publishAt"] = publish_at
 
+    part = "snippet,status"
+    if paid:   # "Includes paid promotion" label, required by some campaign briefs
+        body["paidProductPlacementDetails"] = {"hasPaidProductPlacement": True}
+        part += ",paidProductPlacementDetails"
     media = MediaFileUpload(str(path), chunksize=4 * 1024 * 1024, resumable=True,
                             mimetype="video/mp4")
-    req = client().videos().insert(part="snippet,status", body=body, media_body=media)
+    req = client().videos().insert(part=part, body=body, media_body=media)
 
     response = None
     while response is None:

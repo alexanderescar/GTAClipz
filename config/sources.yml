@@ -28,27 +28,73 @@ defaults:
 
 sources:
 
-  # ── OPEN GTA CAMPAIGNS (join on contentrewards.com, then enable) ──────────
-  - id: cr_lysium_benji_ramos
-    platform: campaign
-    streamer: "Lysium / Benji Ramos"
-    permission: campaign
-    campaign_url: "https://contentrewards.com"     # search "Lysium" on Discover
-    rate_per_1k_usd: 1.50
-    notes: "GTA roleplay streamer campaign. Read the brief for required tags."
-    platforms_allowed: [youtube, tiktok, instagram]
-    longform: true            # campaigns hand you footage -> long-form clipper
-    enabled: false
+  # ── JOINED CAMPAIGNS (2026-11-17) — permission: campaign ─────────────────
+  # Each campaign's caption/hook/platform rules are applied automatically.
+  # After a campaign clip posts, the review issue gets a "SUBMIT NOW" comment:
+  # links must be submitted on contentrewards.com within 30 minutes.
 
-  - id: cr_gta6_tokyo_girl
-    platform: campaign
-    streamer: "GTA 6 – Tokyo Girl (music)"
+  - id: cr_tomo
+    platform: youtube_channel
+    streamer: "Tomo"
+    youtube_channel: "https://www.youtube.com/@Tomovids/streams"
+    title_must_include: ["gta"]           # GTA VI streams only
+    link: "youtube.com/@Tomovids"
     permission: campaign
-    campaign_url: "https://contentrewards.com/articles/gta-6-clipping"
-    rate_per_1k_usd: 0.70
-    notes: "Music campaign. TikTok + Instagram ONLY. Usually 'use this sound'."
-    platforms_allowed: [tiktok, instagram]
-    enabled: false
+    campaign: "TOMO GTA VI Clipping"
+    campaign_url: "https://contentrewards.com/c/campaigns/df6de26f-86ec-4782-b818-1fc8053b99a4"
+    rate_per_1k_usd: 2.00
+    platforms_allowed: [youtube, tiktok, instagram]
+    credit_template: "Subscribe to Tomo on YouTube → @Tomovids"
+    hashtags: ["#tomovids", "#gta6"]
+    hooks:                                # brief bans misleading / fake-context hooks
+      - "Tomo plays GTA 6"
+      - "Tomo's GTA 6 reaction"
+      - "Tomo in Vice City"
+    longform: true
+    enabled: true
+
+  - id: cr_lacy_gta
+    platform: twitch
+    streamer: "Lacy"
+    twitch_login: "lacy"
+    link: "twitch.tv/lacy"
+    permission: campaign
+    campaign: "$12,500 LACY GTA VI Marathon Pool"
+    campaign_url: "https://contentrewards.com/c/campaigns/a5c63fad-cd53-4b81-9305-4a2d1696872a"
+    pool: true                            # 750K total views to qualify; split by views
+    platforms_allowed: [youtube, tiktok, instagram]
+    credit_template: "LACY's GTA 6 marathon — twitch.tv/lacy"
+    hashtags: ["#Lacy", "#gta6"]
+    watermark: false                      # rules: "Logos of any kind are not allowed"
+    hooks:
+      - "LACY in GTA 6"
+      - "LACY's GTA 6 marathon"
+      - "LACY reacts in GTA 6"
+    publish_after: "2026-11-18T00:00:00-05:00"
+    longform: true
+    enabled: true
+
+  - id: cr_ruckus_dom
+    platform: kick
+    streamer: "Dasgas Dom"
+    link: "kick.com/dasgasd3m"
+    permission: campaign
+    campaign: "Dasgasd3m x RUCKUS | GTA 6"
+    campaign_url: "https://contentrewards.com/c/campaigns/051002dd-5c46-43d0-a446-43f2957ba3a9"
+    rate_per_1k_usd: 1.00
+    platforms_allowed: [youtube, tiktok]  # no Instagram in this campaign
+    credit_template: "Dasgas Dom on Kick — kick.com/dasgasd3m · Paid partnership"
+    hashtags: ["#dasgasdom3", "#gta6"]
+    paid_promotion: true                  # brief: disclose paid campaign content
+    hooks:
+      - "Dasgas Dom plays GTA 6"
+      - "Dasgas Dom's GTA 6 reaction"
+    # Footage: ONLY his Nov 19 Kick stream. Paste the VOD link into
+    # config/vod_queue.yml with source_id: cr_ruckus_dom after the stream ends.
+    publish_after: "2026-11-19T09:00:00-08:00"
+    publish_before: "2026-12-19T23:59:00-08:00"
+    longform: true
+    enabled: true
 
   # ── STREAMERS WITH PAID PROGRAMS (join, then flip permission+enabled) ─────
   - id: kaicenat
@@ -58,16 +104,6 @@ sources:
     link: "twitch.tv/kaicenat"
     permission: none          # -> campaign once you join a live Content Rewards pool
     notes: "Marathoning GTA 6 to 100% from launch. Pool campaigns (~$10K) on Content Rewards."
-    longform: true
-    enabled: true
-
-  - id: lacy
-    platform: twitch
-    streamer: "Lacy"
-    twitch_login: "lacy"   
-    link: "twitch.tv/lacy"
-    permission: none          # -> campaign once you join his program on Reach
-    notes: "Own program on Reach, ~$25K pool."
     longform: true
     enabled: true
 

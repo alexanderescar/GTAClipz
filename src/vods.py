@@ -100,6 +100,39 @@ def from_twitch(conn, conf):
     return n
 
 
+# ── YouTube channels (e.g. a campaign streamer who streams on YouTube) ──────
+def from_youtube_channels(conn):
+    import subprocess
+    n = 0
+    for s in sources():
+        if s.get("platform") != "youtube_channel" or not s.get("longform"):
+            continue
+        out = subprocess.run(
+            ["yt-dlp", "--flat-playlist", "--playlist-end", "6",
+             "--print", "%(id)s|%(live_status)s|%(duration)s|%(title)s",
+             s["youtube_channel"]],
+            capture_output=True, text=True, timeout=180)
+        must = [w.lower() for w in s.get("title_must_include") or []]
+        for line in out.stdout.splitlines():
+            parts = line.split("|", 3)
+            if len(parts) < 4:
+                continue
+            vid, live, dur, title = parts
+            if must and not any(w in title.lower() for w in must):
+                continue
+            if live in ("is_live", "is_upcoming"):
+                continue        # chat replay only exists once the stream ends
+            try:
+                d = float(dur)
+            except ValueError:
+                d = 0
+            upsert_vod(conn, "yt:" + vid, s, f"https://www.youtube.com/watch?v={vid}",
+                       platform="youtube", title=title, duration=d)
+            n += 1
+    conn.commit()
+    return n
+
+
 # ── 2 + 3 + 5: the manual queue ───────────────────────────────────────────────
 def from_queue(conn):
     path = ROOT / "config" / "vod_queue.yml"
@@ -133,7 +166,7 @@ def from_queue(conn):
 def collect():
     conf = cfg()
     conn = db()
-    n = from_queue(conn) + from_twitch(conn, conf)
+    n = from_queue(conn) + from_twitch(conn, conf) + from_youtube_channels(conn)
     pend = conn.execute("SELECT lane, COUNT(*) FROM vods WHERE state!='done' "
                         "GROUP BY lane").fetchall()
     log.info("VOD sources: %d seen | pending by lane: %s", n, dict(pend))
