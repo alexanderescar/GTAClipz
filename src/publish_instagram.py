@@ -24,10 +24,21 @@ import requests
 
 from common import log
 
-GRAPH = "https://graph.facebook.com/v21.0"
+GRAPH_FB = "https://graph.facebook.com/v21.0"
+GRAPH_IG = "https://graph.instagram.com/v21.0"
+
+
+def graph_for(token):
+    """Meta issues two kinds of token, each tied to its own API host:
+      EAA...  Facebook/Unified-login token (all new apps since late Oct 2026)
+              -> graph.facebook.com
+      IG...   Instagram-login user token (older apps) -> graph.instagram.com
+    Sending a token to the wrong host fails with 'Cannot parse access token'."""
+    return GRAPH_FB if token.startswith("EAA") else GRAPH_IG
 
 
 def publish(video_url, caption, ig_user_id, token, share_to_feed=True):
+    GRAPH = graph_for(token)
     # 1. create container
     r = requests.post(
         f"{GRAPH}/{ig_user_id}/media",
@@ -75,6 +86,7 @@ def publish(video_url, caption, ig_user_id, token, share_to_feed=True):
 
 def quota_remaining(ig_user_id, token):
     """Ask Meta for your real publishing quota rather than trusting the docs."""
+    GRAPH = graph_for(token)
     r = requests.get(
         f"{GRAPH}/{ig_user_id}/content_publishing_limit",
         params={"fields": "config,quota_usage", "access_token": token},
@@ -84,3 +96,36 @@ def quota_remaining(ig_user_id, token):
     used = d.get("quota_usage", 0)
     total = (d.get("config") or {}).get("quota_total", 100)
     return total - used, total
+
+
+def selftest():
+    """Read-only check: token valid, account reachable, daily post quota."""
+    import os
+    uid, tok = os.environ.get("IG_USER_ID"), os.environ.get("IG_ACCESS_TOKEN")
+    if not (uid and tok):
+        print("  IG_USER_ID / IG_ACCESS_TOKEN not set")
+        return
+    host = graph_for(tok)
+    print(f"  token type: {'Unified/Facebook (EAA)' if tok.startswith('EAA') else 'Instagram login'}"
+          f" -> {host.split('/')[2]}")
+    r = requests.get(f"{host}/{uid}", params={
+        "fields": "username,account_type,followers_count,media_count",
+        "access_token": tok}, timeout=30)
+    if r.status_code != 200:
+        print(f"  account lookup FAILED: {r.text[:400]}")
+        return
+    d = r.json()
+    print(f"  account: @{d.get('username')} | type {d.get('account_type', '?')} | "
+          f"{d.get('followers_count', '?')} followers | {d.get('media_count', '?')} posts")
+    try:
+        left, total = quota_remaining(uid, tok)
+        print(f"  publishing quota: {left}/{total} posts left in the rolling 24h")
+    except Exception as e:  # noqa: BLE001
+        print(f"  quota check failed (may be missing publish permission): {e}")
+    dbg = requests.get("https://graph.facebook.com/debug_token", params={
+        "input_token": tok, "access_token": tok}, timeout=30)
+    if dbg.ok and tok.startswith("EAA"):
+        info = dbg.json().get("data", {})
+        exp = info.get("expires_at")
+        print(f"  token expires: {'never' if not exp else __import__('datetime').datetime.utcfromtimestamp(exp).date()}")
+        print(f"  scopes: {', '.join(info.get('scopes', []))}")

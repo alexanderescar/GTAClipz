@@ -54,7 +54,10 @@ You'll hit YouTube's per-channel upload limit first.
    gets Instagram's monetization — gifts/stars, subscriptions — and the full
    music library.)
 2. developers.facebook.com → **Create App** → *Business* type
-3. Add the **Instagram** product → **Instagram API with Instagram Login**
+3. Add the **Instagram** use case → **Customize** → **API setup with Unified login**
+   (new apps since late Oct 2026 no longer get "Instagram login"; Unified login
+   requires the app to be connected to a free business portfolio at
+   business.facebook.com — App settings → Basic → Business portfolio)
 4. **App roles → add your own IG account as an Instagram Tester**, then accept
    the invite from your Instagram app settings
 5. Generate a token with `instagram_business_content_publish` +
