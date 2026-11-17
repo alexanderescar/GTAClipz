@@ -10,8 +10,9 @@ Two things people get wrong:
      That's why this pipeline ships an R2 uploader — the clip has to be
      reachable on the open internet for the ~60s Meta takes to ingest it.
 
-Requirements: Instagram BUSINESS or Creator account (not personal),
-linked to a Facebook Page.
+Requirements: Instagram Creator (recommended) or Business account, not
+personal. Creator gets monetization and the full music library; both can
+publish Reels through the API.
 Limit: 100 API-published posts per account per rolling 24h (Meta's own docs
 contradict themselves between 50 and 100 — query content_publishing_limit
 for your real number).

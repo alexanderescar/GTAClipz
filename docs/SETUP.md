@@ -49,8 +49,10 @@ You'll hit YouTube's per-channel upload limit first.
 
 ## 3. Instagram (publishing) — 30 min
 
-1. Convert your IG account to **Business** (not Creator — Business is the
-   reliable one for publishing) and link it to a Facebook Page
+1. Switch your IG account to a **Creator** account and link it to a Facebook
+   Page. (Creator now supports automated Reels posting, and unlike Business it
+   gets Instagram's monetization — gifts/stars, subscriptions — and the full
+   music library.)
 2. developers.facebook.com → **Create App** → *Business* type
 3. Add the **Instagram** product → **Instagram API with Instagram Login**
 4. **App roles → add your own IG account as an Instagram Tester**, then accept
