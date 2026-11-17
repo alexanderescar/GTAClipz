@@ -136,7 +136,7 @@ def selftest():
     print(f"  token type: {'Unified/Facebook (EAA)' if tok.startswith('EAA') else 'Instagram login'}"
           f" -> {host.split('/')[2]}")
     r = requests.get(f"{host}/{uid}", params={
-        "fields": "username,account_type,followers_count,media_count",
+        "fields": "username,followers_count,media_count",
         "access_token": tok}, timeout=30)
     if r.status_code != 200:
         print(f"  account lookup FAILED: {r.text[:400]}")
