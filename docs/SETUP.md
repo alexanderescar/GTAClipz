@@ -1,8 +1,8 @@
 # Setup — credential by credential
 
 Budget ~90 minutes. Do YouTube and Instagram first; they're the ones that
-fully automate. Start the TikTok audit application on day one so it clears
-while you're busy.
+fully automate. TikTok runs in sandbox mode (drafts you tap to post).
+
 
 ---
 
