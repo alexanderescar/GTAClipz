@@ -94,7 +94,7 @@ Full credential walkthrough: [docs/SETUP.md](docs/SETUP.md)
 |---|---|---|
 | **YouTube Shorts** | ✅ fully | None. Google reversed the private-upload rule on **2026-11-02** — unverified projects now publish public. 100 uploads/day. |
 | **Instagram Reels** | ✅ fully | Creator account + dev-mode app. **No App Review needed for your own account.** Needs a public `video_url` → R2. |
-| **TikTok** | ⚠️ semi | Direct Post needs a separate audit (1–3 weeks). Until then clips land in your inbox as drafts — you tap post. |
+| **TikTok** | ⚠️ semi | Sandbox drafts land in your inbox — you tap post. No audit: TikTok's rules exclude this kind of app. Fallback: download link on the review page. |
 
 ## Cost
 

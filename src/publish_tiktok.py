@@ -15,13 +15,12 @@ So there are exactly two honest options:
       route that reaches a public audience without the audit, and inbox
       drafts are explicitly exempt from the private-only restriction.
 
-  mode: "direct_post"  (after you pass the audit)
-      Fully automatic. Apply at developers.tiktok.com under
-      Products -> Content Posting API -> Direct Post. Budget 1-3 weeks;
-      it will NOT be approved before launch night.
-
-Plan for inbox_draft during launch week. Apply for the audit on day one so
-direct posting is live by the time the long tail arrives.
+  mode: "direct_post"
+      Requires TikTok's Direct Post audit. TikTok's content sharing
+      guidelines exclude apps that upload to accounts you manage or that copy
+      content from other platforms, so GTAClipz should NOT apply. Stay on
+      inbox_draft (sandbox), with manual posting from the review page as the
+      fallback.
 """
 import os
 import time

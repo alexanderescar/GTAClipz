@@ -66,7 +66,8 @@ def clip_block(c):
         bits.append(f"chat ×{c['chat_ratio']:.1f}")
     if c["audio_lift"]:
         bits.append(f"audio +{c['audio_lift']:.0f} dB")
-    prev = c["preview_url"] or "_preview unavailable — set storage.r2_public_base_"
+    prev = (f"[Watch / download for TikTok]({c['preview_url']})"
+            if c["preview_url"] else "_preview unavailable — set storage.r2_public_base_")
     chat = f" · chat said: **{c['chat_top']}**" if c["chat_top"] else ""
     return (f"\n---\n### {c['streamer']} — {c['note'] or ''}\n"
             f"{' · '.join(bits)}{chat}\n\n▶️ {prev}\n\n"

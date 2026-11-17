@@ -102,13 +102,15 @@ gh secret set R2_SECRET_ACCESS_KEY
 1. developers.tiktok.com → Create app
 2. Add **Content Posting API**
 3. Request scopes `video.upload` (inbox drafts) and `video.publish` (direct)
-4. **Products → Content Posting API → Direct Post → apply for the audit**
+4. Use **Sandbox** with your own account as the target user. **Don't apply for the
+   Direct Post audit**: TikTok's guidelines exclude tools that post to accounts you
+   manage or repost content from other platforms.
 
 ```bash
 gh secret set TIKTOK_ACCESS_TOKEN
 ```
 
-Leave `publish.tiktok.mode: inbox_draft` in settings until the audit clears.
+Leave `publish.tiktok.mode: inbox_draft` in settings.
 Unaudited direct posts return HTTP 200 and publish something **only you can
 see** — the single most wasted week in short-form automation.
 
