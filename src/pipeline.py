@@ -242,6 +242,9 @@ def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "run"
     if mode == "status":
         return status(conn)
+    if mode == "e2etest":
+        import e2etest
+        return e2etest.run()
     if mode == "tiktoktest":
         import tiktok_auth
         return tiktok_auth.selftest()
