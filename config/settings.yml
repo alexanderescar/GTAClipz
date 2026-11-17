@@ -91,6 +91,7 @@ publish:
   instagram:
     enabled: true
     share_to_feed: true
+    ig_user_id: "17841449744252978"   # @gtavicecityclipzz — public ID, not a secret
   tiktok:
     enabled: true
     mode: "inbox_draft"     # inbox_draft | direct_post (direct needs the audit)

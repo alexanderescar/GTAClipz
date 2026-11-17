@@ -195,7 +195,7 @@ def _send(target, path, m, conf, clip):
             raise RuntimeError("storage.r2_public_base unset — Instagram needs a public URL")
         url = clip["preview_url"] or r2.put_public(
             path, f"{safe(clip['clip_id'])}.mp4", st["r2_bucket"], st["r2_public_base"])
-        return publish_instagram.publish(url, m["caption"], os.environ["IG_USER_ID"],
+        return publish_instagram.publish(url, m["caption"], publish_instagram.ig_user_id(),
                                          os.environ["IG_ACCESS_TOKEN"],
                                          conf["publish"]["instagram"]["share_to_feed"])
     if target == "tiktok":

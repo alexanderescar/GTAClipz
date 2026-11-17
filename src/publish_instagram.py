@@ -98,10 +98,22 @@ def quota_remaining(ig_user_id, token):
     return total - used, total
 
 
+def ig_user_id():
+    """The account ID is public, so it lives in settings.yml. The IG_USER_ID
+    secret is only used if the config is empty and the secret is a number."""
+    import os
+    from common import cfg
+    v = str(cfg()["publish"]["instagram"].get("ig_user_id") or "").strip()
+    if v.isdigit():
+        return v
+    env = (os.environ.get("IG_USER_ID") or "").strip()
+    return env if env.isdigit() else None
+
+
 def selftest():
     """Read-only check: token valid, account reachable, daily post quota."""
     import os
-    uid, tok = os.environ.get("IG_USER_ID"), os.environ.get("IG_ACCESS_TOKEN")
+    uid, tok = ig_user_id(), os.environ.get("IG_ACCESS_TOKEN")
     if not (uid and tok):
         print("  IG_USER_ID / IG_ACCESS_TOKEN not set")
         return
