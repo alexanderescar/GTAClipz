@@ -89,9 +89,10 @@ def hook_overlay(hook_text, conf, W, H):
     dur = conf["render"]["hook_card"]["duration"]
     lines = textwrap.wrap(hook_text.upper(), width=18)[:3]
     parts = []
-    # Vertically centre the hook block around 1/3 height,
-    # whatever the line count, so it never drifts onto the gameplay band.
-    base_y = int(H * 0.33) - (len(lines) - 1) * 48
+    # Sit the whole block just ABOVE the 16:9 gameplay band, whatever the
+    # line count, so it never covers the action (a 2-line hook used to spill).
+    band_top = (H - W * 9 // 16) // 2
+    base_y = max(60, band_top - 40 - (len(lines) * 96 - 18))
     for i, line in enumerate(lines):
         y = base_y + i * 96
         parts.append(
