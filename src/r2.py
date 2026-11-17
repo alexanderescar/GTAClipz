@@ -32,3 +32,31 @@ def put_public(path, key, bucket, public_base):
 
 def delete(key, bucket):
     client().delete_object(Bucket=bucket, Key=key)
+
+
+def selftest():
+    """Upload a tiny file, fetch it back over the public URL, delete it."""
+    import time
+    import urllib.request
+    from common import cfg
+    st = cfg()["storage"]
+    key = f"selftest/{int(time.time())}.txt"
+    path = "/tmp/r2_selftest.txt"
+    with open(path, "w") as fh:
+        fh.write("gtaclipz r2 ok\n")
+    client().upload_file(path, st["r2_bucket"], key,
+                         ExtraArgs={"ContentType": "text/plain"})
+    print("  upload: OK")
+    url = f"{st['r2_public_base'].rstrip('/')}/{key}"
+    for attempt in range(5):
+        try:
+            body = urllib.request.urlopen(url, timeout=20).read().decode()
+            print(f"  public fetch: OK ({body.strip()!r}) via {url}")
+            break
+        except Exception as e:  # noqa: BLE001
+            print(f"  public fetch attempt {attempt + 1} failed: {e}")
+            time.sleep(4)
+    else:
+        print("  public fetch: FAILED — check 'Public Development URL' is enabled")
+    delete(key, st["r2_bucket"])
+    print("  cleanup: OK")

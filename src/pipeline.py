@@ -241,6 +241,9 @@ def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "run"
     if mode == "status":
         return status(conn)
+    if mode == "r2test":
+        import r2
+        return r2.selftest()
     want = STAGES if mode == "run" else [mode]
     for st in want:
         try:

@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "run | status | discover | vods | longform | download | render | review | publish"
+        description: "run | status | r2test | discover | vods | longform | download | render | review | publish"
         default: "run"
 
 permissions:

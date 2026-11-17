@@ -99,7 +99,7 @@ publish:
 
 storage:
   r2_bucket: "gta6-clips"
-  r2_public_base: ""        # e.g. https://clips.yourdomain.com  (Instagram needs it)
+  r2_public_base: "https://pub-bf2f85f4cf9e48589d4535e453491451.r2.dev"   # public, not secret
   keep_renders_days: 3
 
 # ── Long-form clipper (VOD -> moments) ────────────────────────────────────
