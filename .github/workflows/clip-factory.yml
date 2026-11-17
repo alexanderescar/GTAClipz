@@ -83,9 +83,23 @@ jobs:
         run: |
           git config user.name  "clip-factory"
           git config user.email "actions@users.noreply.github.com"
-          for f in state/factory.db state/tiktok.enc config/settings.yml; do [ -e "$f" ] && git add "$f"; done
-          git diff --staged --quiet || git commit -m "state: $(date -u +%FT%TZ) [skip ci]"
-          git push || echo "nothing to push"
+          # Someone may have pushed code while this run was working. Keep THIS
+          # run's ledger (it knows what was just posted), take everything else
+          # from the latest main, and retry if another push races us.
+          mkdir -p /tmp/keep
+          for f in state/factory.db state/tiktok.enc; do [ -e "$f" ] && cp "$f" /tmp/keep/; done
+          git diff -- config/settings.yml > /tmp/keep/settings.patch || true
+          for attempt in 1 2 3; do
+            git fetch -q origin main
+            git reset -q --hard origin/main
+            for f in factory.db tiktok.enc; do [ -e /tmp/keep/$f ] && cp /tmp/keep/$f state/$f; done
+            [ -s /tmp/keep/settings.patch ] && (git apply --3way /tmp/keep/settings.patch || echo "settings patch skipped")
+            for f in state/factory.db state/tiktok.enc config/settings.yml; do [ -e "$f" ] && git add "$f"; done
+            git diff --staged --quiet && { echo "nothing to save"; break; }
+            git commit -qm "state: $(date -u +%FT%TZ) [skip ci]"
+            git push -q && { echo "state saved"; break; }
+            echo "push raced, retrying ($attempt)"; sleep 5
+          done
 
       - name: Upload failed renders for inspection
         if: failure()
