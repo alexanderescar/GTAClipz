@@ -219,3 +219,37 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def selftest():
+    """Check Twitch keys, the logins in sources.yml, and the GTA categories."""
+    import os
+    cid, secret = os.environ.get("TWITCH_CLIENT_ID"), os.environ.get("TWITCH_CLIENT_SECRET")
+    if not (cid and secret):
+        print("  TWITCH_CLIENT_ID / TWITCH_CLIENT_SECRET not set")
+        return
+    tok = twitch_token(cid, secret)
+    print("  keys: OK (got an app token)")
+
+    tracked = [s for s in sources(enabled_only=False) if s.get("twitch_login")]
+    users = helix("users", tok, cid, login=[s["twitch_login"] for s in tracked])["data"]
+    found = {u["login"].lower(): u for u in users}
+    live = {x["user_login"].lower(): x for x in helix(
+        "streams", tok, cid, user_id=[u["id"] for u in users])["data"]} if users else {}
+    for s in tracked:
+        u = found.get(s["twitch_login"].lower())
+        if not u:
+            print(f"  login {s['twitch_login']:<14} NOT FOUND  <- fix in sources.yml")
+            continue
+        st = live.get(u["login"].lower())
+        now = f"LIVE now: {st['game_name']} ({st['viewer_count']:,} viewers)" if st else "offline"
+        print(f"  login {s['twitch_login']:<14} OK  {u['display_name']:<14} {now}")
+
+    for name in ("Grand Theft Auto VI", "Grand Theft Auto V"):
+        g = helix("games", tok, cid, name=name)["data"]
+        if not g:
+            print(f"  category {name!r}: not on Twitch yet")
+            continue
+        streams = helix("streams", tok, cid, game_id=g[0]["id"], first=5)["data"]
+        top = ", ".join(f"{x['user_name']} ({x['viewer_count']:,})" for x in streams)
+        print(f"  category {name!r}: id {g[0]['id']} | top live: {top or 'none'}")
