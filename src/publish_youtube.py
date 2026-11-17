@@ -73,3 +73,26 @@ def upload(path, title, description, tags, conf, publish_at=None):
     url = f"https://youtube.com/shorts/{vid}"
     log.info("youtube OK -> %s", url)
     return {"remote_id": vid, "url": url}
+
+
+def selftest():
+    """Read-only: prove the stored login refreshes and carries the upload scope."""
+    import json
+    import requests
+    if not TOKEN.exists() or TOKEN.stat().st_size < 20:
+        print("  YT_TOKEN_JSON secret missing or empty")
+        return
+    try:
+        data = json.loads(TOKEN.read_text())
+    except ValueError:
+        print("  YT_TOKEN_JSON is not valid JSON — paste the whole file contents")
+        return
+    print(f"  token file: OK | refresh token present: {bool(data.get('refresh_token'))}")
+    creds = Credentials.from_authorized_user_file(str(TOKEN), SCOPES)
+    creds.refresh(Request())
+    print("  refresh with Google: OK (login is live)")
+    info = requests.get("https://oauth2.googleapis.com/tokeninfo",
+                        params={"access_token": creds.token}, timeout=30).json()
+    print(f"  scopes granted: {info.get('scope')}")
+    ok = "youtube.upload" in (info.get("scope") or "")
+    print(f"  can upload: {'YES' if ok else 'NO — re-run yt_auth.py and allow access'}")

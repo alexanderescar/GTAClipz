@@ -241,6 +241,9 @@ def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "run"
     if mode == "status":
         return status(conn)
+    if mode == "yttest":
+        import publish_youtube
+        return publish_youtube.selftest()
     if mode == "igtest":
         import publish_instagram
         return publish_instagram.selftest()
