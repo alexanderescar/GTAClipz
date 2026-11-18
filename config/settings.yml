@@ -129,8 +129,9 @@ longform:
 
 # ── Scouting lane (no permission yet -> proof clips for outreach) ─────────
 scouting:
+  enabled: false            # OFF: no time spent on streams we can't post
   clips_per_streamer_per_day: 2
-  auto_discover: true       # source 4: biggest live GTA 6 streams we don't track
+  auto_discover: false      # OFF: only clip streams we're allowed to post
   auto_discover_top: 5
   r2_prefix: "scout/"       # proof clips uploaded here so you can link them in DMs
 

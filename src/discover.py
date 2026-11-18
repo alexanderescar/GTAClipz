@@ -98,13 +98,16 @@ def discover_twitch(conn, conf, client_id, client_secret):
     if not gid:
         return 0
 
-    # Permissioned Twitch streamers only, unless you've whitelisted the game.
+    # Only streamers we're allowed to post. Nothing else is even downloaded.
+    from common import is_publishable
     allow = {
         (s.get("twitch_login") or "").lower()
         for s in sources()
-        if s["platform"] == "twitch"
+        if s["platform"] == "twitch" and is_publishable(s)
     }
     allow.discard("")
+    if not allow:
+        return 0
 
     start = dt.datetime.now(dt.timezone.utc) - dt.timedelta(
         hours=conf["discovery"]["lookback_hours"]
@@ -124,7 +127,7 @@ def discover_twitch(conn, conf, client_id, client_secret):
 
     for c in data.get("data", []):
         login = (c.get("broadcaster_name") or "").lower()
-        if allow and login not in allow:
+        if login not in allow:
             continue
         if per_source.get(login, 0) >= cap:
             continue

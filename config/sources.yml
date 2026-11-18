@@ -115,7 +115,7 @@ sources:
     link: "twitch.tv/nickmercs"
     permission: none          # no clipping campaign found (Nov 18) -> ask, or watch for one
     longform: true
-    enabled: true
+    enabled: false        # no permission yet -> not clipped at all
 
   - id: theburntpeanut
     platform: twitch
@@ -124,7 +124,7 @@ sources:
     link: "twitch.tv/theburntpeanut"
     permission: none          # no clipping campaign found (Nov 18); fan clip pages exist
     longform: true
-    enabled: true
+    enabled: false        # no permission yet -> not clipped at all
 
   # ── STREAMERS WITH PAID PROGRAMS (join, then flip permission+enabled) ─────
   - id: kaicenat
@@ -135,7 +135,7 @@ sources:
     permission: none          # -> campaign once you join a live Content Rewards pool
     notes: "Marathoning GTA 6 to 100% from launch. Pool campaigns (~$10K) on Content Rewards."
     longform: true
-    enabled: true
+    enabled: false        # no permission yet -> not clipped at all
 
   - id: jasontheween
     platform: twitch
@@ -144,7 +144,7 @@ sources:
     link: "twitch.tv/jasontheween"
     permission: none          # CORE pool campaign on Content Rewards
     longform: true
-    enabled: true
+    enabled: false        # no permission yet -> not clipped at all
 
   # ── NO PUBLIC PROGRAM — scouting lane + outreach targets ──────────────────
   - id: xqc
@@ -154,7 +154,7 @@ sources:
     link: "twitch.tv/xqc"
     permission: none
     longform: true
-    enabled: true
+    enabled: false        # no permission yet -> not clipped at all
 
   - id: caseoh
     platform: twitch
@@ -163,7 +163,7 @@ sources:
     link: "twitch.tv/caseoh_"
     permission: none
     longform: true
-    enabled: true
+    enabled: false        # no permission yet -> not clipped at all
 
   - id: agent00
     platform: twitch
@@ -172,7 +172,7 @@ sources:
     link: "twitch.tv/agent00"
     permission: none
     longform: true
-    enabled: true
+    enabled: false        # no permission yet -> not clipped at all
 
   # ── YOUTUBE x ROCKSTAR 24H LAUNCH STREAM — add the VOD link to vod_queue ──
   #    once it exists. Roster: Caylus, Zhong, Kat Buno, Jelly, Rivers,

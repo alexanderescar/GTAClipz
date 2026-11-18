@@ -258,10 +258,12 @@ def run():
     conn = db()
     conn.row_factory = __import__("sqlite3").Row
     # publish lane first: those are the clips that can make money
+    lanes = ("publish", "scout") if conf["scouting"].get("enabled") else ("publish",)
     todo = conn.execute(
-        "SELECT * FROM vods WHERE state IN ('new','scanning') ORDER BY "
-        "CASE lane WHEN 'publish' THEN 0 ELSE 1 END, updated_at LIMIT ?",
-        (lf["max_vods_per_run"],)).fetchall()
+        "SELECT * FROM vods WHERE state IN ('new','scanning') AND lane IN (%s) "
+        "ORDER BY CASE lane WHEN 'publish' THEN 0 ELSE 1 END, updated_at LIMIT ?"
+        % ",".join("?" * len(lanes)),
+        (*lanes, lf["max_vods_per_run"])).fetchall()
     total, t0 = 0, time.time()
     signal.signal(signal.SIGALRM, _alarm)
     for v in todo:
