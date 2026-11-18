@@ -208,7 +208,51 @@ def campaign_slot_open(conn, conf, now=None):
     return True
 
 
+LIMIT_MARKERS = ("exceeded the number of videos", "quotaexceeded", "rate limit",
+                 "too many", "spam_risk", "application request limit", "(#4)",
+                 "(#9)", "(#32)", "(#613)")
+
+
+def is_limit_error(e):
+    t = str(e).lower()
+    return any(m in t for m in LIMIT_MARKERS)
+
+
+def pause_platform(conn, target):
+    """Platform said 'no more today' — skip it until midnight UTC."""
+    conn.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
+    conn.execute("INSERT INTO meta (key,value) VALUES (?, date('now')) "
+                 "ON CONFLICT(key) DO UPDATE SET value=date('now')",
+                 (f"paused:{target}",))
+    log.warning("%s says we've hit its daily limit — pausing it until tomorrow", target)
+
+
+def platform_paused(conn, target):
+    conn.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
+    row = conn.execute("SELECT 1 FROM meta WHERE key=? AND value=date('now')",
+                       (f"paused:{target}",)).fetchone()
+    return bool(row)
+
+
+def requeue_failed(conn):
+    """One-time-per-clip rescue: clips that failed only because a platform
+    hit a limit (or a transient Instagram 400) go back to 'approved'."""
+    rows = conn.execute(
+        "SELECT clip_id FROM clips WHERE state='publish_failed'").fetchall()
+    for (cid,) in rows:
+        errs = [r[0] for r in conn.execute(
+            "SELECT status FROM posts WHERE clip_id=? AND status!='ok'", (cid,))]
+        tries = len(errs)
+        if errs and tries <= 6 and all(
+                is_limit_error(e) or "instagram" in e.lower() or "400 client error" in e.lower()
+                for e in errs):
+            conn.execute("UPDATE clips SET state='approved' WHERE clip_id=?", (cid,))
+            log.info("requeued %s (failed only on platform limits)", cid)
+    conn.commit()
+
+
 def stage_publish(conn, conf):
+    requeue_failed(conn)
     caps = conf["safety"]["max_posts_per_platform_per_day"]
     for c in rows(conn, "SELECT * FROM clips WHERE state='approved' AND "
                         "lane='publish' ORDER BY score DESC LIMIT 20"):
@@ -239,11 +283,12 @@ def stage_publish(conn, conf):
         allowed = set(src.get("platforms_allowed") or ["youtube", "tiktok", "instagram"])
         any_ok = False
         attempted = False
+        limited = False
         posted = []
         for target in ("youtube", "instagram", "tiktok"):
             if target not in allowed or not conf["publish"][target]["enabled"]:
                 continue
-            if posts_today(conn, target) >= caps[target]:
+            if posts_today(conn, target) >= caps[target] or platform_paused(conn, target):
                 continue
             attempted = True
             m = metadata.build(dict(c), target, credit, hook=c["note"],
@@ -260,8 +305,12 @@ def stage_publish(conn, conf):
                 log.error("%s publish failed for %s: %s", target, c["clip_id"], e)
                 conn.execute("INSERT INTO posts (clip_id,target,status) VALUES (?,?,?)",
                              (c["clip_id"], target, f"error: {e}"[:300]))
-        if not attempted:
-            continue    # every platform is at today's cap: keep it approved for tomorrow
+                if is_limit_error(e):
+                    pause_platform(conn, target)
+                    limited = True
+        if not attempted or (limited and not any_ok):
+            conn.commit()
+            continue    # capped / platform limit hit: stays approved, retried later
         conn.execute("UPDATE clips SET state=? WHERE clip_id=?",
                      ("published" if any_ok else "publish_failed", c["clip_id"]))
         conn.commit()

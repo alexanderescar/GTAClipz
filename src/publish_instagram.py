@@ -51,7 +51,8 @@ def publish(video_url, caption, ig_user_id, token, share_to_feed=True):
         },
         timeout=60,
     )
-    r.raise_for_status()
+    if r.status_code >= 400:
+        raise RuntimeError(f"Instagram {r.status_code}: {r.text[:300]}")
     container = r.json()["id"]
     log.info("  ig container %s created", container)
 
@@ -78,7 +79,8 @@ def publish(video_url, caption, ig_user_id, token, share_to_feed=True):
         data={"creation_id": container, "access_token": token},
         timeout=60,
     )
-    p.raise_for_status()
+    if p.status_code >= 400:
+        raise RuntimeError(f"Instagram publish {p.status_code}: {p.text[:300]}")
     mid = p.json()["id"]
     log.info("instagram OK -> media %s", mid)
     return {"remote_id": mid, "url": f"https://www.instagram.com/reel/{mid}/"}
