@@ -236,7 +236,8 @@ def is_block_error(e):
 def pause_platform(conn, target, hours=None):
     """hours=None: 'no more today' — skip it until midnight UTC."""
     conn.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
-    until = "date('now')" if hours is None else f"datetime('now', '+{int(hours)} hours')"
+    until = ("date('now')" if hours is None
+             else f"datetime('now', '+{int(round(hours * 60))} minutes')")
     conn.execute(f"INSERT INTO meta (key,value) VALUES (?, {until}) "
                  f"ON CONFLICT(key) DO UPDATE SET value={until}", (f"paused:{target}",))
     log.warning("%s refused — pausing it %s", target,
@@ -365,6 +366,13 @@ def _publish_approved(conn, conf, chrome_tiktok):
                              (c["clip_id"], target, f"error: {e}"[:300]))
                 if is_limit_error(e):
                     pause_platform(conn, target, hours=1 if is_block_error(e) else None)
+                    limited = True
+                else:
+                    # Unknown error: cool down instead of firing the same failing
+                    # call for every queued clip every 2.5 min. On Nov 18 that burst
+                    # (11 failures in 8 s, then 12 per loop) got Meta to block the
+                    # app's API access for about an hour.
+                    pause_platform(conn, target, hours=0.5)
                     limited = True
         if not attempted or (limited and not any_ok):
             conn.commit()
