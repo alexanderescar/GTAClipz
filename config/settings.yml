@@ -78,9 +78,9 @@ safety:
   strip_source_watermarks: true     # another platform's logo kills reach
   skip_if_phash_seen: true          # never post the same moment twice
   max_posts_per_platform_per_day:
-    youtube: 8
+    youtube: 15
     tiktok: 6
-    instagram: 6
+    instagram: 15
 
 # ── Publishing ────────────────────────────────────────────────────────────
 publish:
