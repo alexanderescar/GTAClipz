@@ -80,6 +80,13 @@ sources:
       - "LACY reacts in GTA 6"
     publish_after: "2026-11-18T00:00:00-05:00"
     footage_after: "2026-11-18T00:00:00-05:00"   # rules: marathon footage only
+    also_submit_to:
+      - campaign: "$25,000 Lacy 30 Day Campaign"
+        url: "https://contentrewards.com/c/campaigns/4479e5e2-9a00-489e-8b0c-345834f37cc7"
+        note: "skip until Reach confirms one clip may go to both Lacy pools (open a ticket)"
+      - campaign: "$20,000 CORE Pool"
+        url: "https://contentrewards.com/c/campaigns/2886f500-f062-48dd-a9b4-9de5725f8186"
+        note: "ONLY if 2+ CORE members (Lacy, Jason, Stable Ronaldo, Marlon, Adapt, Silky) are on screen"
     longform: true
     enabled: true
 
@@ -104,6 +111,70 @@ sources:
     footage_after: "2026-11-19T00:00:00-08:00"   # brief: ONLY his Nov 19 stream
     footage_before: "2026-11-20T12:00:00-08:00"
     publish_before: "2026-12-19T23:59:00-08:00"
+    longform: true
+    enabled: true
+
+  - id: cr_clix_gta
+    platform: twitch
+    streamer: "Clix"
+    twitch_login: "clix"
+    link: "twitch.tv/clix"
+    permission: campaign
+    campaign: "$5,000 Clix GTA VI Marathon Pool"
+    campaign_url: "https://contentrewards.com/c/campaigns/985dc674-c75e-44fc-ac87-1b1506324389"
+    pool: true                            # 400K total views to qualify
+    platforms_allowed: [youtube, tiktok, instagram]
+    credit_template: "Clix's GTA 6 marathon — twitch.tv/clix"
+    hashtags: ["#Clix", "#gta6"]          # rules: name + #Clix
+    watermark: false                      # Reach: no logos
+    hooks: ["Clix in GTA 6", "Clix's GTA 6 marathon", "Clix reacts in GTA 6"]
+    title_must_include: ["gta"]           # marathon only (live: GTA VI category)
+    publish_after: "2026-11-18T00:00:00-05:00"
+    footage_after: "2026-11-18T00:00:00-05:00"
+    longform: true
+    enabled: true
+
+  - id: cr_jason
+    platform: twitch
+    streamer: "JasonTheWeen"
+    twitch_login: "jasontheween"
+    link: "twitch.tv/jasontheween"
+    permission: campaign
+    campaign: "$9,000 Jason Pool"
+    campaign_url: "https://contentrewards.com/c/campaigns/0b178e3c-fbd3-4294-8ded-394e3da9c62f"
+    pool: true                            # 700K total views to qualify
+    platforms_allowed: [youtube, tiktok, instagram]
+    credit_template: "JasonTheWeen — twitch.tv/jasontheween"
+    hashtags: ["#JasonTheWeen", "#gta6"]  # rules: name + #JasonTheWeen
+    watermark: false
+    hooks: ["JasonTheWeen in GTA 6", "JasonTheWeen plays GTA 6", "JasonTheWeen reacts in GTA 6"]
+    title_must_include: ["gta"]           # keep the page on-niche: GTA streams only
+    publish_after: "2026-11-18T00:00:00-05:00"
+    publish_before: "2026-11-30T23:59:00-05:00"   # campaign ends Nov 30
+    footage_after: "2026-11-18T00:00:00-05:00"
+    also_submit_to:
+      - campaign: "$20,000 CORE Pool"
+        url: "https://contentrewards.com/c/campaigns/2886f500-f062-48dd-a9b4-9de5725f8186"
+        note: "ONLY if 2+ CORE members (Lacy, Jason, Stable Ronaldo, Marlon, Adapt, Silky) are on screen"
+    longform: true
+    enabled: true
+
+  - id: cr_bobby
+    platform: twitch
+    streamer: "Bobby VanRiper"
+    twitch_login: "bobby_vanriper"
+    link: "twitch.tv/bobby_vanriper"
+    permission: campaign
+    campaign: "BOBBY VAN RIPER GTA VI Clipping"
+    campaign_url: "https://contentrewards.com/c/campaigns/f583b069-ced7-49e5-9ed3-2d3a13d6df0c"
+    platforms_allowed: [youtube, tiktok, instagram]
+    credit_template: "Follow Bobby Vanriper on Twitch — twitch.tv/bobby_vanriper"   # brief: CTA required
+    hashtags: ["#BobbyVanriper", "#gta6"]
+    watermark: false
+    hooks: ["Bobby Vanriper in GTA 6", "Bobby Vanriper plays GTA 6"]
+    title_must_include: ["gta"]           # brief: GTA VI content only
+    publish_after: "2026-11-18T00:00:00-05:00"
+    footage_after: "2026-11-18T00:00:00-05:00"
     longform: true
     enabled: true
 
@@ -137,16 +208,6 @@ sources:
     longform: true
     enabled: false        # no permission yet -> not clipped at all
 
-  - id: jasontheween
-    platform: twitch
-    streamer: "JasonTheWeen"
-    twitch_login: "jasontheween"
-    link: "twitch.tv/jasontheween"
-    permission: none          # CORE pool campaign on Content Rewards
-    longform: true
-    enabled: false        # no permission yet -> not clipped at all
-
-  # ── NO PUBLIC PROGRAM — scouting lane + outreach targets ──────────────────
   - id: xqc
     platform: twitch
     streamer: "xQc"

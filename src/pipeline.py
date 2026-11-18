@@ -260,6 +260,9 @@ def submit_now_alert(c, src, posted):
                          + ", then submit that link.")
         else:
             lines.append(f"- **{target.title()}:** {url}")
+    for extra in src.get("also_submit_to") or []:
+        lines.append(f"\n➕ **Also submit the same links to {extra['campaign']}:** "
+                     f"{extra['url']}" + (f" — {extra['note']}" if extra.get("note") else ""))
     lines.append(f"\n`{c['clip_id']}`")
     try:
         import review

@@ -82,8 +82,10 @@ def from_twitch(conn, conf):
         users = helix("users", tok, cid,
                       login=[s["twitch_login"] for s in tracked])["data"]
         by_login = {u["login"].lower(): u["id"] for u in users}
-        live = {s["user_id"] for s in helix(
-            "streams", tok, cid, user_id=list(by_login.values()))["data"]}
+        streams = helix("streams", tok, cid, user_id=list(by_login.values()))["data"]
+        live = {x["user_id"] for x in streams}
+        gid = str(conf["game"].get("twitch_game_id") or "")
+        live_gta = {x["user_id"] for x in streams if str(x.get("game_id")) == gid}
         for s in tracked:
             uid = by_login.get(s["twitch_login"].lower())
             if not uid:
@@ -92,10 +94,17 @@ def from_twitch(conn, conf):
                 continue
             vids = helix("videos", tok, cid, user_id=uid, type="archive",
                          first=2)["data"]
+            must = [w.lower() for w in s.get("title_must_include") or []]
             for i, v in enumerate(vids):
+                is_live = uid in live and i == 0
+                # GTA-only sources: a live stream counts if its category is GTA VI
+                # right now; a finished VOD needs GTA in its title.
+                if must and not (is_live and uid in live_gta) and \
+                        not any(w in v["title"].lower() for w in must):
+                    continue
                 upsert_vod(conn, "tw:" + v["id"], s, v["url"],
                            title=v["title"], duration=parse_twitch_duration(v["duration"]),
-                           is_live=(uid in live and i == 0),
+                           is_live=is_live,
                            created_at=v.get("created_at"))
                 n += 1
 
