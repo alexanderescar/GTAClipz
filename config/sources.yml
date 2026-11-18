@@ -80,10 +80,10 @@ sources:
       - "LACY reacts in GTA 6"
     publish_after: "2026-11-18T00:00:00-05:00"
     footage_after: "2026-11-18T00:00:00-05:00"   # rules: marathon footage only
+    # Reach (mudaap, Nov 18 ticket): the SAME clip can't go to both Lacy campaigns.
+    # The $25K Lacy 30 Day campaign is for different clips — use it once the
+    # marathon pool ends (switch campaign_url then).
     also_submit_to:
-      - campaign: "$25,000 Lacy 30 Day Campaign"
-        url: "https://contentrewards.com/c/campaigns/4479e5e2-9a00-489e-8b0c-345834f37cc7"
-        note: "skip until Reach confirms one clip may go to both Lacy pools (open a ticket)"
       - campaign: "$20,000 CORE Pool"
         url: "https://contentrewards.com/c/campaigns/2886f500-f062-48dd-a9b4-9de5725f8186"
         note: "ONLY if 2+ CORE members (Lacy, Jason, Stable Ronaldo, Marlon, Adapt, Silky) are on screen"
