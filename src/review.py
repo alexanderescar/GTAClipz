@@ -80,6 +80,52 @@ def clip_block(c):
             f"- [ ] ❌ Reject `{c['clip_id']}`\n")
 
 
+def tidy_body(body, pending):
+    """Put clips still waiting for you at the TOP under a 'Needs your review'
+    heading, and fold already-decided ones into a collapsed section, so a
+    clip can't hide between ones you've done. Ticks are kept as they are."""
+    lines = [l for l in (body or "").split("\n") if "<!-- rv:" not in l]
+    text = "\n".join(lines)
+    head, *blocks = text.split("\n---\n")
+    head = head.rstrip() + "\n"
+    todo, done = [], []
+    for b in blocks:
+        b = b.strip("\n")
+        if not b:
+            continue
+        ids = [cid for _, _, cid in BOX.findall(b)]
+        ticked = any(t.strip() for t, _, _ in BOX.findall(b))
+        (todo if ids and ids[0] in pending and not ticked else done).append(b)
+    out = [head]
+    if todo:
+        out.append(f"\n## ⏳ Needs your review: {len(todo)} <!-- rv:todo -->")
+        out += [f"\n---\n{b}\n" for b in todo]
+    else:
+        out.append("\n## ✅ All caught up <!-- rv:todo -->")
+    if done:
+        out.append(f"\n<details><summary>✔️ Already decided ({len(done)}) — tap to "
+                   f"expand</summary><!-- rv:done -->\n")
+        out += [f"\n---\n{b}\n" for b in done]
+        out.append("\n</details><!-- rv:end -->")
+    return "\n".join(out).replace("\n\n\n", "\n\n")
+
+
+def tidy_issue(conn, num):
+    pending = {r[0] for r in conn.execute(
+        "SELECT clip_id FROM clips WHERE state='pending_review'")}
+    iss = _gh("GET", f"/issues/{num}")          # fresh copy: keep your latest ticks
+    body = iss.get("body") or ""
+    new = tidy_body(body, pending)
+    waiting = new.count("- [ ] ✅ Approve") and "Needs your review" in new
+    patch = {}
+    if new != body and parse_decisions(new) == parse_decisions(body):
+        patch["body"] = new
+    if waiting and iss.get("state") != "open":
+        patch["state"] = "open"                 # clips still waiting: don't hide them
+    if patch:
+        _gh("PATCH", f"/issues/{num}", json=patch)
+
+
 def parse_decisions(body):
     """{clip_id: 'approved'|'rejected'} for every ticked box. Reject wins ties."""
     out = {}
@@ -194,6 +240,11 @@ def stage(conn, conf):
     new = conn.execute("SELECT * FROM clips WHERE state='rendered' AND "
                        "lane='publish' ORDER BY score DESC").fetchall()
     if not new:
+        for iss in issues:
+            try:
+                tidy_issue(conn, iss["number"])
+            except Exception as e:  # noqa: BLE001
+                log.warning("review: couldn't tidy #%s: %s", iss["number"], e)
         return
     iss = todays_issue(r["issue_label"])
     body = iss.get("body") or ""
@@ -206,6 +257,11 @@ def stage(conn, conf):
     _gh("PATCH", f"/issues/{iss['number']}", json={"body": body})
     conn.commit()
     log.info("review: queued %d clips in issue #%s", len(new), iss["number"])
+    for n in {iss["number"], *(i["number"] for i in issues)}:
+        try:
+            tidy_issue(conn, n)
+        except Exception as e:  # noqa: BLE001
+            log.warning("review: couldn't tidy #%s: %s", n, e)
 
 
 def report():
