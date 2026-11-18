@@ -238,25 +238,61 @@ def process_vod(conn, v, conf):
     return made
 
 
+class VodTimeout(Exception):
+    pass
+
+
+def _alarm(signum, frame):
+    raise VodTimeout()
+
+
 def run():
+    """One bad VOD must never freeze a cycle (posting runs after this stage).
+    Each VOD gets a time budget, and the whole stage gets one too."""
+    import signal
+    import time
     conf = cfg()
+    lf = conf["longform"]
     conn = db()
     conn.row_factory = __import__("sqlite3").Row
     # publish lane first: those are the clips that can make money
     todo = conn.execute(
         "SELECT * FROM vods WHERE state IN ('new','scanning') ORDER BY "
         "CASE lane WHEN 'publish' THEN 0 ELSE 1 END, updated_at LIMIT ?",
-        (conf["longform"]["max_vods_per_run"],)).fetchall()
-    total = 0
+        (lf["max_vods_per_run"],)).fetchall()
+    total, t0 = 0, time.time()
+    signal.signal(signal.SIGALRM, _alarm)
     for v in todo:
+        left = lf.get("stage_budget_s", 1500) - (time.time() - t0)
+        if left < 120:
+            log.info("long-form: time budget used, leaving the rest for next cycle")
+            break
+        signal.alarm(int(min(lf.get("vod_budget_s", 600), left)))
         try:
             total += process_vod(conn, v, conf)
+        except VodTimeout:
+            conn.rollback()
+            if v["lane"] == "publish":
+                # skip this chunk rather than retry it forever
+                nxt = (v["processed_to"] or 0) + lf["max_chunk_s"]
+                log.error("VOD %s timed out — skipping to %.0fs", v["vod_id"], nxt)
+                conn.execute("UPDATE vods SET processed_to=?, state='scanning', "
+                             "updated_at=CURRENT_TIMESTAMP WHERE vod_id=?",
+                             (nxt, v["vod_id"]))
+            else:
+                log.error("VOD %s timed out — dropped from scouting", v["vod_id"])
+                conn.execute("UPDATE vods SET state='error', "
+                             "updated_at=CURRENT_TIMESTAMP WHERE vod_id=?",
+                             (v["vod_id"],))
+            conn.commit()
         except Exception as e:  # noqa: BLE001
             log.error("VOD %s failed: %s", v["vod_id"], e)
             conn.execute("UPDATE vods SET state='error', "
                          "updated_at=CURRENT_TIMESTAMP WHERE vod_id=?",
                          (v["vod_id"],))
             conn.commit()
+        finally:
+            signal.alarm(0)
     log.info("long-form: %d clips cut this run", total)
     return total
 

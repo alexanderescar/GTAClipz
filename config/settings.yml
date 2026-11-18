@@ -114,6 +114,8 @@ longform:
   enabled: true
   max_vods_per_run: 3
   max_chunk_s: 14400        # scan at most 4h of a VOD per run (chat download time)
+  vod_budget_s: 600         # give up on one VOD after 10 min (it hung a cycle once)
+  stage_budget_s: 1500      # all long-form work per cycle; posting runs after
   min_chunk_s: 600          # don't bother scanning <10 min of new footage
   live_margin_s: 300        # stay 5 min behind the live edge of a growing VOD
   min_chat_messages: 200    # below this, chat is too thin -> audio fallback

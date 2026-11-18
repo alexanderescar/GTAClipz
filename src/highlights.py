@@ -127,7 +127,8 @@ def loudness_per_second(path_or_url, start=None, duration=None):
             "aresample=8000,asetnsamples=n=8000,astats=metadata=1:reset=1,"
             "ametadata=print:key=lavfi.astats.Overall.RMS_level:file=-",
             "-f", "null", "-"]
-    out = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+    out = subprocess.run(cmd, capture_output=True, text=True, check=True,
+                         timeout=600).stdout
     levels = []
     for line in out.splitlines():
         if "RMS_level=" in line:
