@@ -61,11 +61,16 @@ render:
     # The hook card exists partly to push gameplay past that boundary.
   captions:
     enabled: true
-    model: "base.en"        # tiny.en if CPU-bound; base.en is the sweet spot
-    style: "karaoke"
-    font_size: 64
-    max_chars_per_line: 22
-    y_position: 0.68        # keeps clear of platform UI chrome
+    model: "small.en"       # A: fewer misheard words than base.en (~2x slower)
+    vocabulary: ["Vice City", "Leonida", "Lucia", "Jason", "chat", "GTA", "Lacy",
+                 "Clix", "JasonTheWeen", "Tomo", "Bobby", "Marlon", "Stable Ronaldo"]
+    style: "karaoke"        # B: word-by-word, current word highlighted
+    font: "Anton"           # heavy display font (installed by the workflow)
+    font_size: 92
+    highlight_colour: "&H0000E5FF"   # yellow (ASS colours are BGR)
+    max_words: 3
+    max_chars_per_line: 18
+    y_position: 0.68        # used only when no layout-specific spot exists
   watermark:
     enabled: true
     text: "@gtavicecityclipzz"   # your own branding is fine and does NOT hurt reach

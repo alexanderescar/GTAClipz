@@ -74,6 +74,7 @@ sources:
     credit_template: "LACY's GTA 6 marathon — twitch.tv/lacy"
     hashtags: ["#LACY", "#gta6"]          # rules spell it #LACY
     watermark: false                      # rules: "Logos of any kind are not allowed"
+    facecam: [0.0, 0.0, 0.26, 0.26]       # top-left cam (measured Nov 18)
     hooks:
       - "LACY in GTA 6"
       - "LACY's GTA 6 marathon"
@@ -128,6 +129,7 @@ sources:
     hashtags: ["#Clix", "#gta6"]          # rules: name + #Clix
     watermark: false                      # Reach: no logos
     hooks: ["Clix in GTA 6", "Clix's GTA 6 marathon", "Clix reacts in GTA 6"]
+    facecam: [0.06, 0.05, 0.19, 0.21]     # top-left cam, slightly inset (measured Nov 18)
     title_must_include: ["gta"]           # marathon only (live: GTA VI category)
     publish_after: "2026-11-18T00:00:00-05:00"
     footage_after: "2026-11-18T00:00:00-05:00"

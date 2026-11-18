@@ -121,7 +121,9 @@ def stage_render(conn, conf):
         out = WORK / "out" / f"{safe(c['clip_id'])}.mp4"
         try:
             dur = min(transform.probe(src_path)["duration"], cap)
-            transform.render(src_path, out, hook_text=hook, conf=rconf, duration=dur)
+            vocab = [x for x in (c["streamer"], src.get("streamer")) if x]
+            transform.render(src_path, out, hook_text=hook, conf=rconf, duration=dur,
+                             facecam=src.get("facecam"), vocab=vocab)
         except Exception as e:  # noqa: BLE001
             log.error("render failed %s: %s", c["clip_id"], e)
             conn.execute("UPDATE clips SET state='render_failed' WHERE clip_id=?",

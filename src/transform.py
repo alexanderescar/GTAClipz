@@ -14,6 +14,7 @@ Pipeline per clip:
 Everything here is ffmpeg + faster-whisper. No paid service, no API key.
 """
 import json
+import re
 import pathlib
 import shlex
 import subprocess
@@ -21,7 +22,21 @@ import textwrap
 
 from common import ROOT, WORK, cfg, log
 
-FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+FONT_FALLBACK = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+FONT = next((str(f) for f in [pathlib.Path.home() / ".fonts" / "Anton-Regular.ttf",
+                              pathlib.Path("/usr/share/fonts/truetype/anton/Anton-Regular.ttf")]
+             if f.exists()), FONT_FALLBACK)
+
+# Words viewers shouldn't see spelled out (audio is untouched). Keeps reach and
+# ad-eligibility up and stays clear of "negative light" campaign rules.
+CENSOR = {
+    "fuck": "F**K", "fucking": "F**KING", "fucked": "F**KED", "fuckin": "F**KIN",
+    "motherfucker": "MOTHERF**KER", "shit": "SH*T", "bullshit": "BULLSH*T",
+    "bitch": "B*TCH", "bitches": "B*TCHES", "asshole": "A**HOLE", "dick": "D*CK",
+    "pussy": "P*SSY", "cunt": "C*NT", "nigga": "N***A", "niggas": "N***AS",
+    "nigger": "N****R", "faggot": "F****T", "retard": "R****D", "damn": "DAMN",
+}
+FILLERS = {"uh", "um", "uhh", "umm", "hmm", "mm", "erm", "ah"}
 
 
 def run(cmd, **kw):
@@ -45,6 +60,31 @@ def probe(path):
 
 
 # ── Layouts ────────────────────────────────────────────────────────────────
+def facecam_geometry(facecam, src_w, src_h, W, H):
+    """Top panel height for the facecam, from the cam box's real aspect."""
+    fx, fy, fw, fh = facecam
+    cam_aspect = (fw * src_w) / (fh * src_h)
+    top = int(round(W / cam_aspect / 2) * 2)
+    return max(480, min(760, top))
+
+
+def split_filter(facecam, src_w, src_h, W, H):
+    """Streamer on top, gameplay big underneath (the standard clip layout)."""
+    fx, fy, fw, fh = facecam
+    top = facecam_geometry(facecam, src_w, src_h, W, H)
+    bottom = H - top
+    gw = min(src_w, int(src_h * W / bottom) // 2 * 2)      # gameplay crop width
+    gx = (src_w - gw) // 2
+    return (
+        f"[0:v]split=2[camsrc][gamesrc];"
+        f"[camsrc]crop={int(src_w*fw)//2*2}:{int(src_h*fh)//2*2}:"
+        f"{int(src_w*fx)}:{int(src_h*fy)},"
+        f"scale={W}:{top}:force_original_aspect_ratio=increase,crop={W}:{top}[cam];"
+        f"[gamesrc]crop={gw}:{src_h}:{gx}:0,scale={W}:{bottom}[game];"
+        f"[cam][game]vstack=inputs=2"
+    ), top
+
+
 def layout_filter(layout, W, H):
     """Return the ffmpeg filter chain that maps 16:9 -> 9:16."""
     if layout == "center_crop":
@@ -84,15 +124,19 @@ def esc(text):
     )
 
 
-def hook_overlay(hook_text, conf, W, H):
+def hook_overlay(hook_text, conf, W, H, center_y=None):
     """Big text card over the opening beat."""
     dur = conf["render"]["hook_card"]["duration"]
     lines = textwrap.wrap(hook_text.upper(), width=18)[:3]
     parts = []
-    # Sit the whole block just ABOVE the 16:9 gameplay band, whatever the
-    # line count, so it never covers the action (a 2-line hook used to spill).
-    band_top = (H - W * 9 // 16) // 2
-    base_y = max(60, band_top - 40 - (len(lines) * 96 - 18))
+    block = len(lines) * 96 - 18
+    if center_y is not None:                       # split layout: on the seam
+        base_y = max(60, center_y - block // 2)
+    else:
+        # Sit the whole block just ABOVE the 16:9 gameplay band, whatever the
+        # line count, so it never covers the action (a 2-line hook used to spill).
+        band_top = (H - W * 9 // 16) // 2
+        base_y = max(60, band_top - 40 - block)
     for i, line in enumerate(lines):
         y = base_y + i * 96
         parts.append(
@@ -123,8 +167,26 @@ def watermark_overlay(conf, W, H):
 
 
 # ── Captions ───────────────────────────────────────────────────────────────
-def transcribe(src, conf):
-    """Word-level timestamps via faster-whisper. Returns an ASS subtitle path."""
+def clean_word(raw):
+    """C: censor, drop fillers. Returns '' to drop the word."""
+    core = raw.strip()
+    bare = re.sub(r"[^a-z']", "", core.lower())
+    if bare in FILLERS:
+        return ""
+    if bare in CENSOR:
+        trail = re.sub(r"^.*?([.,!?]*)$", r"\1", core)
+        return CENSOR[bare] + trail
+    return core.upper()
+
+
+def transcribe(src, conf, caption_y=None, vocab=None):
+    """Word-by-word captions (current word highlighted) as an ASS file.
+
+    A: a bigger Whisper model plus a vocabulary prompt (streamer names, GTA
+       places) so names come out right.
+    B: 1-3 words on screen, the spoken word in yellow, heavy outlined font.
+    C: swears censored, filler words dropped.
+    """
     try:
         from faster_whisper import WhisperModel
     except ImportError:
@@ -133,25 +195,31 @@ def transcribe(src, conf):
 
     r = conf["render"]["captions"]
     model = WhisperModel(r["model"], device="cpu", compute_type="int8")
-    segments, _ = model.transcribe(str(src), word_timestamps=True, vad_filter=True)
+    words_hint = ", ".join(dict.fromkeys(
+        [*(vocab or []), *r.get("vocabulary", [])]))
+    segments, _ = model.transcribe(
+        str(src), word_timestamps=True, vad_filter=True, beam_size=5,
+        initial_prompt=(f"GTA 6 stream. {words_hint}." if words_hint else None))
 
     H = conf["render"]["height"]
     W = conf["render"]["width"]
-    y = int(H * r["y_position"])
+    y = caption_y if caption_y is not None else int(H * r["y_position"])
+    font = r.get("font", "Anton")
+    size = r["font_size"]
+    hi = r.get("highlight_colour", "&H0000E5FF")      # BGR: yellow
     ass = [
         "[Script Info]",
         "ScriptType: v4.00+",
         f"PlayResX: {W}",
         f"PlayResY: {H}",
+        "WrapStyle: 2",
         "",
         "[V4+ Styles]",
-        "Format: Name,Fontname,Fontsize,PrimaryColour,OutlineColour,BackColour,"
-        "Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,"
-        "Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding",
-        f"Style: Pop,DejaVu Sans,{r['font_size']},&H00FFFFFF,&H00000000,"
-        f"&H64000000,-1,0,0,0,100,100,0,0,1,5,2,2,60,60,{H-y},1",
-        f"Style: Hot,DejaVu Sans,{r['font_size']},&H0000E5FF,&H00000000,"
-        f"&H64000000,-1,0,0,0,100,100,0,0,1,5,2,2,60,60,{H-y},1",
+        "Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,"
+        "BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,"
+        "BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding",
+        f"Style: Cap,{font},{size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H96000000,"
+        f"-1,0,0,0,100,100,1,0,1,7,3,5,40,40,0,1",
         "",
         "[Events]",
         "Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text",
@@ -159,39 +227,54 @@ def transcribe(src, conf):
 
     def ts(t):
         h, rem = divmod(max(0.0, t), 3600)
-        m, s = divmod(rem, 60)
-        return f"{int(h)}:{int(m):02d}:{s:05.2f}"
+        m, s_ = divmod(rem, 60)
+        return f"{int(h)}:{int(m):02d}:{s_:05.2f}"
 
-    # Group words into short phrases so the line never overruns the frame
-    buf, start = [], None
+    words = []
     for seg in segments:
         for w in seg.words or []:
-            if start is None:
-                start = w.start
-            buf.append(w)
-            if sum(len(x.word) for x in buf) >= r["max_chars_per_line"] or w.word.strip().endswith((".", "!", "?")):
-                text = "".join(x.word for x in buf).strip()
-                style = "Hot" if any(
-                    k in text.lower() for k in ("insane", "wtf", "no way", "what")
-                ) else "Pop"
-                ass.append(
-                    f"Dialogue: 0,{ts(start)},{ts(w.end)},{style},,0,0,0,,{text.upper()}"
-                )
-                buf, start = [], None
-    if buf:
-        text = "".join(x.word for x in buf).strip()
-        ass.append(
-            f"Dialogue: 0,{ts(start)},{ts(buf[-1].end)},Pop,,0,0,0,,{text.upper()}"
-        )
+            text = clean_word(w.word)
+            if text:
+                words.append((w.start, w.end, text))
+
+    # group into short phrases: max N words / chars, break on pauses + punctuation
+    max_words = r.get("max_words", 3)
+    phrases, cur = [], []
+    for i, wd in enumerate(words):
+        cur.append(wd)
+        nxt = words[i + 1] if i + 1 < len(words) else None
+        chars = sum(len(x[2]) + 1 for x in cur)
+        if (len(cur) >= max_words or chars >= r["max_chars_per_line"]
+                or wd[2].endswith((".", "!", "?")) or nxt is None
+                or nxt[0] - wd[1] > 0.6):
+            phrases.append(cur)
+            cur = []
+
+    pos = f"{{\\an5\\pos({W // 2},{y})}}"
+    n = 0
+    for pi, ph in enumerate(phrases):
+        nxt_start = phrases[pi + 1][0][0] if pi + 1 < len(phrases) else None
+        for j, (st, en, _) in enumerate(ph):
+            end = ph[j + 1][0] if j + 1 < len(ph) else en + 0.15
+            if nxt_start is not None:
+                end = min(end, nxt_start)      # never two lines on screen at once
+            text = " ".join(
+                (f"{{\\c{hi}&\\fscx110\\fscy110}}{t}{{\\c&H00FFFFFF&\\fscx100\\fscy100}}"
+                 if k == j else t)
+                for k, (_, _, t) in enumerate(ph))
+            ass.append(f"Dialogue: 0,{ts(st)},{ts(end)},Cap,,0,0,0,,{pos}{text}")
+            n += 1
 
     out = WORK / "render" / (pathlib.Path(src).stem + ".ass")
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(ass), encoding="utf-8")
-    log.info("captions: %d lines -> %s", len(ass) - 14, out.name)
+    log.info("captions: %d words in %d phrases -> %s", n, len(phrases), out.name)
     return out
 
 
 # ── Main render ────────────────────────────────────────────────────────────
-def render(src, dst, hook_text=None, conf=None, start=0.0, duration=None):
+def render(src, dst, hook_text=None, conf=None, start=0.0, duration=None,
+           facecam=None, vocab=None):
     conf = conf or cfg()
     r = conf["render"]
     W, H = r["width"], r["height"]
@@ -199,12 +282,20 @@ def render(src, dst, hook_text=None, conf=None, start=0.0, duration=None):
     duration = duration or min(info["duration"], cfg()["defaults"]["max_clip_seconds"]
                                if "defaults" in cfg() else 75)
 
-    sub = transcribe(src, conf) if r["captions"]["enabled"] else None
+    if facecam:                                    # D: cam on top, game below
+        chain, seam = split_filter(facecam, info["width"], info["height"], W, H)
+        cap_y, hook_center = seam, seam
+    else:
+        chain = layout_filter(r["layout"], W, H)
+        band_bottom = (H + W * 9 // 16) // 2
+        cap_y, hook_center = band_bottom + 90, None
 
-    chain = layout_filter(r["layout"], W, H)
+    sub = transcribe(src, conf, caption_y=cap_y, vocab=vocab) \
+        if r["captions"]["enabled"] else None
+
     post = []
     if hook_text and r["hook_card"]["enabled"]:
-        post.append(hook_overlay(hook_text, conf, W, H))
+        post.append(hook_overlay(hook_text, conf, W, H, center_y=hook_center))
     if sub:
         post.append(f"subtitles={shlex.quote(str(sub))}")
     wm = watermark_overlay(conf, W, H)
