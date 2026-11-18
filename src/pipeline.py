@@ -236,12 +236,14 @@ def stage_publish(conn, conf):
             link=src.get("link", ""))
         allowed = set(src.get("platforms_allowed") or ["youtube", "tiktok", "instagram"])
         any_ok = False
+        attempted = False
         posted = []
         for target in ("youtube", "instagram", "tiktok"):
             if target not in allowed or not conf["publish"][target]["enabled"]:
                 continue
             if posts_today(conn, target) >= caps[target]:
                 continue
+            attempted = True
             m = metadata.build(dict(c), target, credit, hook=c["note"],
                                extra_tags=src.get("hashtags"))
             try:
@@ -256,6 +258,8 @@ def stage_publish(conn, conf):
                 log.error("%s publish failed for %s: %s", target, c["clip_id"], e)
                 conn.execute("INSERT INTO posts (clip_id,target,status) VALUES (?,?,?)",
                              (c["clip_id"], target, f"error: {e}"[:300]))
+        if not attempted:
+            continue    # every platform is at today's cap: keep it approved for tomorrow
         conn.execute("UPDATE clips SET state=? WHERE clip_id=?",
                      ("published" if any_ok else "publish_failed", c["clip_id"]))
         conn.commit()
