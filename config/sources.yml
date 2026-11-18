@@ -136,6 +136,27 @@ sources:
     longform: true
     enabled: true
 
+  - id: cr_yourrage
+    platform: twitch
+    streamer: "YourRAGE"
+    twitch_login: "yourragegaming"
+    link: "twitch.tv/yourragegaming"
+    permission: campaign
+    campaign: "YourRAGE $5,000 GTA 6 Pool"
+    campaign_url: "https://contentrewards.com/c/campaigns/be9b123e-ea47-4305-b6c5-af81f503b247"
+    rules_url: "https://reachclipping.com/yourRAGE"
+    pool: true                            # 500K approved views to qualify (Reach)
+    platforms_allowed: [youtube, tiktok, instagram]
+    credit_template: "YourRAGE's GTA 6 marathon — twitch.tv/yourragegaming"
+    hashtags: ["#yourrage", "#gta6"]      # rules: Rage's name + #yourrage
+    watermark: false                      # Reach: no logos of any kind
+    hooks: ["YourRAGE in GTA 6", "Rage's GTA 6 marathon", "YourRAGE reacts in GTA 6"]
+    title_must_include: ["gta"]           # marathon only; Rage must be the main focus
+    publish_after: "2026-11-18T00:00:00-05:00"
+    footage_after: "2026-11-18T00:00:00-05:00"
+    longform: true
+    enabled: false                        # flip to true once joined on Content Rewards
+
   - id: cr_jason
     platform: twitch
     streamer: "JasonTheWeen"
