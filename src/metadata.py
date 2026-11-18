@@ -37,18 +37,35 @@ TITLE_TEMPLATES = [
 ]
 
 BASE_TAGS = [
-    "gta6", "gta vi", "grand theft auto 6", "gta 6 gameplay",
+    "gta6", "gta vi", "gta 6", "grand theft auto 6", "grand theft auto vi",
+    "gta 6 gameplay", "gta vi gameplay",
     "vice city", "leonida", "jason and lucia", "gta 6 clips",
     "shorts", "gaming",
 ]
 
 HANDLE = "@gtavicecityclipzz"
 
+# "GTA 6" is what people type; "GTA VI" is the official name. Use both so the
+# clip matches either search; lead with the bigger one.
 HASHTAGS = {
-    "youtube": "#GTA6 #GrandTheftAuto6 #ViceCity #Shorts #Gaming",
-    "tiktok": "#gta6 #gta6gameplay #vicecity #fyp #gaming #grandtheftauto6",
-    "instagram": "#gta6 #grandtheftauto6 #vicecity #gaming #reels #gta6gameplay",
+    "youtube": "#GTA6 #GTAVI #ViceCity #Shorts #Gaming",
+    "tiktok": "#gta6 #gtavi #gta6clips #vicecity #gaming",
+    "instagram": "#gta6 #gtavi #grandtheftautovi #vicecity #gaming #reels",
 }
+
+# Campaign-safe hooks: always name the streamer (briefs require it), never
+# negative, never invented context.
+STREAMER_HOOKS = [
+    "{streamer} in GTA 6",
+    "{streamer} found this in Vice City",
+    "Wait for {streamer}'s reaction",
+    "{streamer}'s first day in GTA 6",
+    "{streamer} vs Vice City",
+    "{streamer} did not expect this in GTA 6",
+    "How {streamer} plays GTA 6",
+    "{streamer} takes over Vice City",
+]
+STREAMER_CHAT_HOOKS = ["{streamer}'s chat lost it", "{streamer}'s chat went crazy for this"]
 
 
 def clean(text):
@@ -61,7 +78,11 @@ def make_hook(clip, seed=None, templates=None):
     """Campaign sources pass their own neutral hooks (briefs ban fake context)."""
     rng = random.Random(seed or clip.get("clip_id"))
     if templates:
-        return rng.choice(templates)
+        name = clip.get("streamer") or ""
+        pool = list(templates) + [h.format(streamer=name) for h in STREAMER_HOOKS]
+        if (clip.get("chat_ratio") or 0) >= 6:
+            pool += [h.format(streamer=name) for h in STREAMER_CHAT_HOOKS]
+        return rng.choice(pool)
     pool = CHAT_HOOKS if (clip.get("chat_ratio") or 0) >= 6 else HOOKS
     t = rng.choice(pool)
     return t.format(

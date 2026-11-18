@@ -250,6 +250,14 @@ def submit_now_alert(c, src, posted):
              f"@{owner}" if owner else "",
              f"Posted just now. Submit within **30 minutes**: {src.get('campaign_url', '')}",
              ""]
+    tiktok_caption = None
+    try:
+        import metadata
+        hook = metadata.make_hook(dict(c), templates=src.get("hooks"))
+        tiktok_caption = metadata.build(dict(c), "tiktok", src.get("credit_template", ""),
+                                        hook=hook, extra_tags=src.get("hashtags"))["caption"]
+    except Exception:  # noqa: BLE001
+        pass
     for target, url, status in posted:
         if target == "tiktok":
             lines.append("- **TikTok:** open the TikTok app → **Inbox** → tap the "
@@ -257,7 +265,10 @@ def submit_now_alert(c, src, posted):
                          "folder). Post it from there"
                          + (" — turn on *Content disclosure → Paid partnership* first"
                             if src.get("paid_promotion") else "")
-                         + ", then submit that link.")
+                         + ", then submit that link."
+                         + ("\n  **Paste this as the TikTok caption** (TikTok doesn't "
+                            "receive it from the robot; the campaign needs it):\n"
+                            "```\n" + tiktok_caption + "\n```" if tiktok_caption else ""))
         else:
             lines.append(f"- **{target.title()}:** {url}")
     for extra in src.get("also_submit_to") or []:
