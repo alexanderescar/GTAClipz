@@ -22,7 +22,8 @@ reminders:
       1. GitHub phone app installed, signed in, push notifications ON
          (Settings → Notifications → Participating / @mentions).
       2. When "clips waiting" pings arrive, tick ✅ / ❌ in the issue.
-      3. When a "🚨 SUBMIT NOW" ping arrives: open TikTok → Drafts → post it,
+      3. When a "🚨 SUBMIT NOW" ping arrives: open TikTok → Inbox → tap the
+         "your video is ready" notification (NOT the Drafts folder) → post it,
          then submit every link on Content Rewards within 30 minutes.
       4. Clips only post 8 am–11 pm ET (change in config/settings.yml).
 
@@ -31,8 +32,9 @@ reminders:
     title: "RUCKUS: Dom streams GTA 6 today"
     message: |
       Only today's Kick stream counts for the RUCKUS campaign. The robot picks
-      it up after the stream ends. For these clips, on TikTok turn ON
-      Content disclosure → "Paid partnership" before you post the draft.
+      it up after the stream ends. For these clips, when you open the TikTok
+      Inbox notification, turn ON Content disclosure → "Paid partnership"
+      before you post.
       YouTube gets the paid-promotion label automatically. No Instagram.
 
   - id: ruckus-vod-missing

@@ -247,9 +247,12 @@ def submit_now_alert(c, src, posted):
              ""]
     for target, url, status in posted:
         if target == "tiktok":
-            lines.append("- **TikTok:** in your drafts. Post it from the app "
-                         "(turn on *Content disclosure → Paid partnership* if the "
-                         "campaign requires it), then submit that link.")
+            lines.append("- **TikTok:** open the TikTok app → **Inbox** → tap the "
+                         "notification \"Your video … is ready\" (not the Drafts "
+                         "folder). Post it from there"
+                         + (" — turn on *Content disclosure → Paid partnership* first"
+                            if src.get("paid_promotion") else "")
+                         + ", then submit that link.")
         else:
             lines.append(f"- **{target.title()}:** {url}")
     lines.append(f"\n`{c['clip_id']}`")
