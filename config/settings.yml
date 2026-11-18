@@ -106,7 +106,7 @@ publish:
     # direct_post = needs TikTok's audit
     # Switched to "chrome" automatically by the hourly Claude task the first
     # time it runs with the TikTok-posting instructions.
-    mode: "inbox_draft"
+    mode: "chrome"
   # "SUBMIT NOW" phone pings: on while you post TikToks by hand (inbox_draft),
   # off in chrome mode (Claude posts + submits). Set true/false to override.
   # submit_now_alerts: true
