@@ -133,6 +133,10 @@ def db():
         conn.execute("ALTER TABLE vods ADD COLUMN created_at TEXT")
     except sqlite3.OperationalError:
         pass
+    try:   # 1 = live AND in the GTA VI category right now, 0 = live in another game
+        conn.execute("ALTER TABLE vods ADD COLUMN in_game INTEGER")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     return conn
 

@@ -194,6 +194,15 @@ def process_vod(conn, v, conf, room=None):
                      ("scanning" if v["is_live"] else "done", v["vod_id"]))
         conn.commit()
         return 0
+    in_game = v["in_game"] if "in_game" in v.keys() else None
+    if v["is_live"] and in_game == 0:
+        # Streamer switched away from GTA VI (e.g. a zombies break mid-marathon):
+        # skip the new footage — campaigns pay for GTA only, and it's off-niche.
+        log.info("skip %s: %s is live but not in GTA VI right now", v["vod_id"], v["streamer"])
+        conn.execute("UPDATE vods SET processed_to=?, state='scanning', "
+                     "updated_at=CURRENT_TIMESTAMP WHERE vod_id=?", (horizon, v["vod_id"]))
+        conn.commit()
+        return 0
     end = min(horizon, start + lf["max_chunk_s"])
     log.info("scan %s [%s] %s %.0f→%.0fs", v["vod_id"], v["lane"],
              v["streamer"], start, end)

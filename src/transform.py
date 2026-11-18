@@ -127,11 +127,12 @@ def esc(text):
 def hook_overlay(hook_text, conf, W, H, center_y=None):
     """Big text card over the opening beat."""
     dur = conf["render"]["hook_card"]["duration"]
-    lines = textwrap.wrap(hook_text.upper(), width=18)[:3]
+    # Anton is condensed, so more characters fit per line than with DejaVu
+    lines = textwrap.wrap(hook_text.upper(), width=24 if "Anton" in FONT else 18)[:3]
     parts = []
     block = len(lines) * 96 - 18
     if center_y is not None:                       # split layout: on the seam
-        base_y = max(60, center_y - block // 2)
+        base_y = max(60, center_y - block - 70)    # sits just above the seam
     else:
         # Sit the whole block just ABOVE the 16:9 gameplay band, whatever the
         # line count, so it never covers the action (a 2-line hook used to spill).

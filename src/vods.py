@@ -106,6 +106,9 @@ def from_twitch(conn, conf):
                            title=v["title"], duration=parse_twitch_duration(v["duration"]),
                            is_live=is_live,
                            created_at=v.get("created_at"))
+                conn.execute("UPDATE vods SET in_game=? WHERE vod_id=?",
+                             ((1 if uid in live_gta else 0) if is_live else None,
+                              "tw:" + v["id"]))
                 n += 1
 
     # 4. auto-discovery: who's biggest in GTA 6 right now that we don't track
