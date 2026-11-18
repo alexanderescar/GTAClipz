@@ -107,6 +107,25 @@ sources:
     longform: true
     enabled: true
 
+  # ── BIG GTA 6 STREAMERS, NO PROGRAM FOUND (scout lane: proof clips only) ──
+  - id: nickmercs
+    platform: twitch
+    streamer: "NickMercs"
+    twitch_login: "nickmercs"
+    link: "twitch.tv/nickmercs"
+    permission: none          # no clipping campaign found (Nov 18) -> ask, or watch for one
+    longform: true
+    enabled: true
+
+  - id: theburntpeanut
+    platform: twitch
+    streamer: "TheBurntPeanut"
+    twitch_login: "theburntpeanut"
+    link: "twitch.tv/theburntpeanut"
+    permission: none          # no clipping campaign found (Nov 18); fan clip pages exist
+    longform: true
+    enabled: true
+
   # ── STREAMERS WITH PAID PROGRAMS (join, then flip permission+enabled) ─────
   - id: kaicenat
     platform: twitch
