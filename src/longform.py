@@ -24,9 +24,70 @@ from common import WORK, cfg, db, log
 SAFE = re.compile(r"[^A-Za-z0-9_.-]")
 
 
+_PLAYLISTS = {}
+
+
+def _hls_playlist(url):
+    """Twitch/Kick VODs are HLS: a playlist of ~2-10 s video segments."""
+    import requests
+    from urllib.parse import urljoin
+    if url not in _PLAYLISTS:
+        out = subprocess.run(["yt-dlp", "-g", "-f", "b[height<=1080]/b", url],
+                             capture_output=True, text=True, timeout=120, check=True)
+        _PLAYLISTS[url] = out.stdout.strip().splitlines()[0]
+    m3u8 = _PLAYLISTS[url]
+    text = requests.get(m3u8, timeout=30).text
+    if "#EXT-X-STREAM-INF" in text:          # master playlist: take first variant
+        variant = next(l for l in text.splitlines() if l and not l.startswith("#"))
+        m3u8 = urljoin(m3u8, variant)
+        _PLAYLISTS[url] = m3u8
+        text = requests.get(m3u8, timeout=30).text
+    segs, t, dur = [], 0.0, None
+    for line in text.splitlines():
+        if line.startswith("#EXTINF:"):
+            dur = float(line[8:].split(",")[0])
+        elif line and not line.startswith("#") and dur is not None:
+            segs.append((t, dur, urljoin(m3u8, line)))
+            t, dur = t + dur, None
+    return segs
+
+
+def hls_cut(url, start, end, dst):
+    """Download ONLY the segments covering [start, end] — seconds, not minutes,
+    even 10 hours into a marathon stream."""
+    import requests
+    import tempfile
+    segs = [s for s in _hls_playlist(url) if s[0] + s[1] > start and s[0] < end]
+    if not segs:
+        raise RuntimeError(f"no HLS segments for {start:.0f}-{end:.0f}")
+    with tempfile.TemporaryDirectory() as tmp:
+        parts = []
+        for i, (_, _, seg_url) in enumerate(segs):
+            part = pathlib.Path(tmp) / f"{i:04d}.ts"
+            r = requests.get(seg_url, timeout=60)
+            r.raise_for_status()
+            part.write_bytes(r.content)
+            parts.append(part)
+        listing = pathlib.Path(tmp) / "list.txt"
+        listing.write_text("".join(f"file '{p}'\n" for p in parts))
+        subprocess.run(
+            ["ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0",
+             "-i", str(listing), "-ss", f"{start - segs[0][0]:.2f}",
+             "-t", f"{end - start:.2f}", "-c:v", "libx264", "-preset", "veryfast",
+             "-crf", "18", "-c:a", "aac", str(dst)],
+            check=True, capture_output=True, text=True, timeout=300)
+    return dst
+
+
 def cut_window(src, start, end, dst):
-    """Fetch only [start, end] of a video. URLs via yt-dlp, files via ffmpeg."""
+    """Fetch only [start, end] of a video. Twitch/Kick: grab the exact HLS
+    segments; anything else (YouTube): yt-dlp sections; files: ffmpeg."""
     dst = pathlib.Path(dst)
+    if re.match(r"https?://(www\.)?(twitch\.tv|kick\.com)/", str(src)):
+        try:
+            return hls_cut(str(src), start, end, dst)
+        except Exception as e:  # noqa: BLE001
+            log.warning("segment cut failed (%s); trying yt-dlp", e)
     if re.match(r"https?://", str(src)):
         subprocess.run(
             ["yt-dlp", "-q", "--no-warnings",
@@ -34,7 +95,7 @@ def cut_window(src, start, end, dst):
              "--download-sections", f"*{start:.0f}-{end:.0f}",
              "--force-keyframes-at-cuts", "--merge-output-format", "mp4",
              "-o", str(dst), str(src)],
-            check=True, capture_output=True, text=True, timeout=600,
+            check=True, capture_output=True, text=True, timeout=240,
         )
     else:
         subprocess.run(
