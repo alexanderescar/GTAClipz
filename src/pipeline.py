@@ -355,7 +355,9 @@ def main():
         import r2
         return r2.selftest()
     # "approve" = the quick check between full runs: read your ticks, post
-    want = (STAGES if mode == "run" else
+    # A full run starts by posting what you approved since the last cycle, so
+    # ticks never wait behind 10-30 min of cutting/rendering.
+    want = (["review", "publish"] + STAGES if mode == "run" else
             ["review", "publish", "remind"] if mode == "approve" else [mode])
     for st in want:
         try:
