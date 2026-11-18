@@ -210,7 +210,11 @@ def campaign_slot_open(conn, conf, now=None):
 
 LIMIT_MARKERS = ("exceeded the number of videos", "quotaexceeded", "rate limit",
                  "too many", "spam_risk", "application request limit", "(#4)",
-                 "(#9)", "(#32)", "(#613)")
+                 "(#9)", "(#32)", "(#613)",
+                 # Meta blocked the app / token died: every retry fails the
+                 # same way, and hammering it every few minutes looks like abuse.
+                 "api access blocked", "5258005", "error validating access token",
+                 "session has expired")
 
 
 def is_limit_error(e):
@@ -224,7 +228,8 @@ def pause_platform(conn, target):
     conn.execute("INSERT INTO meta (key,value) VALUES (?, date('now')) "
                  "ON CONFLICT(key) DO UPDATE SET value=date('now')",
                  (f"paused:{target}",))
-    log.warning("%s says we've hit its daily limit — pausing it until tomorrow", target)
+    log.warning("%s refused (daily limit or blocked access) — pausing it until tomorrow",
+                target)
 
 
 def platform_paused(conn, target):
@@ -315,10 +320,10 @@ def stage_publish(conn, conf):
                      ("published" if any_ok else "publish_failed", c["clip_id"]))
         conn.commit()
         if posted and src.get("permission") == "campaign":
-            submit_now_alert(c, src, posted)
+            submit_now_alert(c, src, posted, credit)
 
 
-def submit_now_alert(c, src, posted):
+def submit_now_alert(c, src, posted, credit=None):
     """Campaigns only pay if each post link is submitted within 30 minutes.
     Comment on the clip's review issue so GitHub pushes it to your phone."""
     owner = (os.environ.get("GITHUB_REPOSITORY") or "/").split("/")[0]
@@ -329,8 +334,11 @@ def submit_now_alert(c, src, posted):
     tiktok_caption = None
     try:
         import metadata
-        hook = metadata.make_hook(dict(c), templates=src.get("hooks"))
-        tiktok_caption = metadata.build(dict(c), "tiktok", src.get("credit_template", ""),
+        # Same hook + credit the robot used for YouTube/Instagram, so the
+        # TikTok caption matches and always carries the campaign's tag first.
+        hook = c["note"] or metadata.make_hook(dict(c), templates=src.get("hooks"))
+        tiktok_caption = metadata.build(dict(c), "tiktok",
+                                        credit or src.get("credit_template", ""),
                                         hook=hook, extra_tags=src.get("hashtags"))["caption"]
     except Exception:  # noqa: BLE001
         pass

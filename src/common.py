@@ -137,6 +137,17 @@ def db():
         conn.execute("ALTER TABLE vods ADD COLUMN in_game INTEGER")
     except sqlite3.OperationalError:
         pass
+    # Twitch clips used to be stored as "twitch:<login>". Everything that
+    # matches posts to campaigns (milestones, the Content Rewards submit task)
+    # looks them up by the config id, so rewrite old rows to it.
+    try:
+        for s in sources(enabled_only=False):
+            login = (s.get("twitch_login") or "").lower()
+            if login:
+                conn.execute("UPDATE clips SET source_id=? WHERE lower(source_id)=?",
+                             (s["id"], "twitch:" + login))
+    except Exception:  # noqa: BLE001 — never block startup on a cosmetic fix
+        pass
     conn.commit()
     return conn
 

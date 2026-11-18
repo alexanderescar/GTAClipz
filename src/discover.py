@@ -152,7 +152,7 @@ def discover_twitch(conn, conf, client_id, client_secret):
                VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 c["id"],
-                "twitch:" + login,
+                src["id"] if src else "twitch:" + login,
                 c.get("broadcaster_name"),
                 "twitch",
                 c.get("title"),
