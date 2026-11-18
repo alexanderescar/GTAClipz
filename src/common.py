@@ -189,7 +189,7 @@ def source_by_id(sid):
 
 def posts_today(conn, target):
     row = conn.execute(
-        "SELECT COUNT(*) FROM posts WHERE target=? AND status='ok' "
+        "SELECT COUNT(*) FROM posts WHERE target=? AND status IN ('ok','queued') "
         "AND date(posted_at)=date('now')",
         (target,),
     ).fetchone()

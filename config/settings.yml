@@ -100,7 +100,14 @@ publish:
     ig_user_id: "17841449744252978"   # @gtavicecityclipzz — public ID, not a secret
   tiktok:
     enabled: true
-    mode: "inbox_draft"     # inbox_draft | direct_post (direct needs the audit)
+    # chrome      = the hourly Claude task posts it from Chrome at tiktok.com
+    #               WITH the full caption + campaign tag (src/tiktok_queue.py)
+    # inbox_draft = API drop into the TikTok inbox; you add the caption by hand
+    # direct_post = needs TikTok's audit
+    mode: "chrome"
+  # The hourly Claude task submits every campaign link itself, so the
+  # "SUBMIT NOW" phone pings are off. Set true to get them back.
+  submit_now_alerts: false
   # Campaign clips only go live when you can submit the link within 30 min.
   # Approved clips wait (in order) until the window opens. Edit to your day.
   campaign_hours:

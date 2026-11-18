@@ -201,7 +201,7 @@ def campaign_slot_open(conn, conf, now=None):
     cap = pub.get("campaign_clips_per_hour")
     if cap:
         start = now.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
-        n = conn.execute("SELECT COUNT(DISTINCT clip_id) FROM posts WHERE status='ok' "
+        n = conn.execute("SELECT COUNT(DISTINCT clip_id) FROM posts WHERE status IN ('ok','queued') "
                          "AND posted_at >= ?", (start,)).fetchone()[0]
         if n >= cap:
             return False
@@ -217,26 +217,47 @@ LIMIT_MARKERS = ("exceeded the number of videos", "quotaexceeded", "rate limit",
                  "session has expired")
 
 
+BLOCK_MARKERS = ("api access blocked", "5258005", "error validating access token",
+                 "session has expired")
+
+
 def is_limit_error(e):
     t = str(e).lower()
     return any(m in t for m in LIMIT_MARKERS)
 
 
-def pause_platform(conn, target):
-    """Platform said 'no more today' — skip it until midnight UTC."""
+def is_block_error(e):
+    """Access problems get fixed by a human, often within the hour — so they
+    pause the platform for an hour, not the whole day."""
+    t = str(e).lower()
+    return any(m in t for m in BLOCK_MARKERS)
+
+
+def pause_platform(conn, target, hours=None):
+    """hours=None: 'no more today' — skip it until midnight UTC."""
     conn.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
-    conn.execute("INSERT INTO meta (key,value) VALUES (?, date('now')) "
-                 "ON CONFLICT(key) DO UPDATE SET value=date('now')",
-                 (f"paused:{target}",))
-    log.warning("%s refused (daily limit or blocked access) — pausing it until tomorrow",
-                target)
+    until = "date('now')" if hours is None else f"datetime('now', '+{int(hours)} hours')"
+    conn.execute(f"INSERT INTO meta (key,value) VALUES (?, {until}) "
+                 f"ON CONFLICT(key) DO UPDATE SET value={until}", (f"paused:{target}",))
+    log.warning("%s refused — pausing it %s", target,
+                "until tomorrow" if hours is None else f"for {hours}h")
 
 
 def platform_paused(conn, target):
     conn.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
-    row = conn.execute("SELECT 1 FROM meta WHERE key=? AND value=date('now')",
-                       (f"paused:{target}",)).fetchone()
-    return bool(row)
+    row = conn.execute("SELECT value FROM meta WHERE key=?", (f"paused:{target}",)).fetchone()
+    if not row or not row[0]:
+        return False
+    v = row[0]
+    if len(v) == 10:                       # a date: paused for that whole day
+        if v != conn.execute("SELECT date('now')").fetchone()[0]:
+            return False
+        # A day-long pause caused by blocked access (older code did that) is
+        # lifted: access problems only pause for an hour now.
+        last = conn.execute("SELECT status FROM posts WHERE target=? AND status!='ok' "
+                            "ORDER BY id DESC LIMIT 1", (target,)).fetchone()
+        return not (last and is_block_error(last[0]))
+    return conn.execute("SELECT datetime('now') < ?", (v,)).fetchone()[0] == 1
 
 
 def requeue_failed(conn):
@@ -247,7 +268,8 @@ def requeue_failed(conn):
     for (cid,) in rows:
         errs = [r[0] for r in conn.execute(
             "SELECT status FROM posts WHERE clip_id=? AND status!='ok'", (cid,))]
-        tries = len(errs)
+        # limit/blocked errors aren't the clip's fault: don't count them
+        tries = len([e for e in errs if not is_limit_error(e)])
         if errs and tries <= 6 and all(
                 is_limit_error(e) or "instagram" in e.lower() or "400 client error" in e.lower()
                 for e in errs):
@@ -257,6 +279,22 @@ def requeue_failed(conn):
 
 
 def stage_publish(conn, conf):
+    import tiktok_queue
+    chrome_tiktok = conf["publish"]["tiktok"].get("mode") == "chrome"
+    if chrome_tiktok:
+        tiktok_queue.absorb_posted(conn)
+    try:
+        _publish_approved(conn, conf, chrome_tiktok)
+    finally:
+        if chrome_tiktok:
+            try:
+                tiktok_queue.sync_branch(conn)
+            except Exception as e:  # noqa: BLE001
+                log.error("tiktok queue sync failed: %s", e)
+
+
+def _publish_approved(conn, conf, chrome_tiktok):
+    import tiktok_queue
     requeue_failed(conn)
     caps = conf["safety"]["max_posts_per_platform_per_day"]
     for c in rows(conn, "SELECT * FROM clips WHERE state='approved' AND "
@@ -299,11 +337,16 @@ def stage_publish(conn, conf):
             m = metadata.build(dict(c), target, credit, hook=c["note"],
                                extra_tags=src.get("hashtags"))
             try:
-                res = _send(target, local, m, conf, c,
-                            paid=bool(src.get("paid_promotion")))
+                if target == "tiktok" and chrome_tiktok:
+                    # Claude posts it from Chrome with the full caption (:41 task)
+                    res = tiktok_queue.enqueue(conn, c, local, m["caption"], src)
+                else:
+                    res = _send(target, local, m, conf, c,
+                                paid=bool(src.get("paid_promotion")))
                 conn.execute("INSERT INTO posts (clip_id,target,remote_id,url,status) "
-                             "VALUES (?,?,?,?,'ok')",
-                             (c["clip_id"], target, res.get("remote_id"), res.get("url")))
+                             "VALUES (?,?,?,?,?)",
+                             (c["clip_id"], target, res.get("remote_id"), res.get("url"),
+                              "queued" if res.get("status") == "QUEUED_CHROME" else "ok"))
                 any_ok = True
                 posted.append((target, res.get("url") or "", res.get("status")))
             except Exception as e:  # noqa: BLE001
@@ -311,7 +354,7 @@ def stage_publish(conn, conf):
                 conn.execute("INSERT INTO posts (clip_id,target,status) VALUES (?,?,?)",
                              (c["clip_id"], target, f"error: {e}"[:300]))
                 if is_limit_error(e):
-                    pause_platform(conn, target)
+                    pause_platform(conn, target, hours=1 if is_block_error(e) else None)
                     limited = True
         if not attempted or (limited and not any_ok):
             conn.commit()
@@ -319,7 +362,8 @@ def stage_publish(conn, conf):
         conn.execute("UPDATE clips SET state=? WHERE clip_id=?",
                      ("published" if any_ok else "publish_failed", c["clip_id"]))
         conn.commit()
-        if posted and src.get("permission") == "campaign":
+        if (posted and src.get("permission") == "campaign"
+                and conf["publish"].get("submit_now_alerts", True)):
             submit_now_alert(c, src, posted, credit)
 
 
