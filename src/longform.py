@@ -187,6 +187,12 @@ def process_vod(conn, v, conf):
     horizon = dur - (lf["live_margin_s"] if v["is_live"] else 0)
     start = v["processed_to"] or 0
     if horizon - start < lf["min_chunk_s"]:
+        # Not enough new footage. A finished VOD is done; a live one goes to
+        # the back of the line so it can't hog a slot every cycle.
+        conn.execute("UPDATE vods SET state=?, updated_at=CURRENT_TIMESTAMP "
+                     "WHERE vod_id=?",
+                     ("scanning" if v["is_live"] else "done", v["vod_id"]))
+        conn.commit()
         return 0
     end = min(horizon, start + lf["max_chunk_s"])
     log.info("scan %s [%s] %s %.0f→%.0fs", v["vod_id"], v["lane"],
