@@ -308,8 +308,12 @@ def _publish_approved(conn, conf, chrome_tiktok):
         log.info("publish: %d approved clips older than %dh expired", n, keep_h)
     conn.commit()
     caps = conf["safety"]["max_posts_per_platform_per_day"]
-    for c in rows(conn, "SELECT * FROM clips WHERE state='approved' AND "
-                        "lane='publish' ORDER BY score DESC LIMIT 20"):
+    queue = rows(conn, "SELECT * FROM clips WHERE state='approved' AND "
+                       "lane='publish' ORDER BY score DESC")
+    # Best first, with priority streamers (sources.yml priority:) boosted.
+    queue = sorted(queue, key=lambda c: -(c["score"] or 0) *
+                   float(source_for(c).get("priority", 1)))[:20]
+    for c in queue:
         src = source_for(c)
         if not is_publishable(src):       # belt and braces: never trust the lane alone
             conn.execute("UPDATE clips SET state='blocked_no_permission' "

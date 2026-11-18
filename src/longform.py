@@ -210,6 +210,9 @@ def process_vod(conn, v, conf, room=None):
     windows = find_windows(v, start, end, lf)
 
     limit = v["max_clips"] or lf["max_clips_per_chunk"]
+    if v["lane"] == "publish":
+        from common import source_by_id
+        limit *= int((source_by_id(v["source_id"]) or {}).get("priority", 1))
     if room is not None:
         limit = min(limit, room)      # only cut what this cycle can render
     if v["lane"] == "scout":
@@ -283,11 +286,14 @@ def run():
         return
     # publish lane first: those are the clips that can make money
     lanes = ("publish", "scout") if conf["scouting"].get("enabled") else ("publish",)
+    from common import source_by_id
     todo = conn.execute(
         "SELECT * FROM vods WHERE state IN ('new','scanning') AND lane IN (%s) "
-        "ORDER BY CASE lane WHEN 'publish' THEN 0 ELSE 1 END, updated_at LIMIT ?"
-        % ",".join("?" * len(lanes)),
-        (*lanes, lf["max_vods_per_run"])).fetchall()
+        "ORDER BY CASE lane WHEN 'publish' THEN 0 ELSE 1 END, updated_at"
+        % ",".join("?" * len(lanes)), lanes).fetchall()
+    # Higher-priority streamers (priority: in sources.yml) get scanned first.
+    todo = sorted(todo, key=lambda v: -int((source_by_id(v["source_id"]) or {})
+                                           .get("priority", 1)))[:lf["max_vods_per_run"]]
     total, t0 = 0, time.time()
     signal.signal(signal.SIGALRM, _alarm)
     for v in todo:

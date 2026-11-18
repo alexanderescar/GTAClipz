@@ -37,6 +37,20 @@ CENSOR = {
     "nigger": "N****R", "faggot": "F****T", "retard": "R****D", "damn": "DAMN",
 }
 FILLERS = {"uh", "um", "uhh", "umm", "hmm", "mm", "erm", "ah"}
+# Words muted in the AUDIO too: strong profanity and slurs are what get Shorts
+# age-restricted (Nov 18: a Lacy Short was). Milder words (shit, damn) stay.
+BLEEP = {"fuck", "fucking", "fucked", "fuckin", "fucker", "fucks", "motherfucker",
+         "motherfucking", "cunt", "nigga", "niggas", "nigger", "faggot", "fag",
+         "retard", "retarded"}
+
+
+def is_bleep(raw):
+    core = raw.strip().lower()
+    bare = re.sub(r"[^a-z']", "", core).strip("'")
+    if bare in BLEEP:
+        return True
+    # Whisper sometimes writes "f***ing" itself
+    return "*" in core and re.sub(r"[^a-z*]", "", core)[:1] in ("f", "c", "n")
 
 
 def run(cmd, **kw):
@@ -180,7 +194,7 @@ def clean_word(raw):
     return core.upper()
 
 
-def transcribe(src, conf, caption_y=None, vocab=None):
+def transcribe(src, conf, caption_y=None, vocab=None, bleeps=None):
     """Word-by-word captions (current word highlighted) as an ASS file.
 
     A: a bigger Whisper model plus a vocabulary prompt (streamer names, GTA
@@ -234,6 +248,8 @@ def transcribe(src, conf, caption_y=None, vocab=None):
     words = []
     for seg in segments:
         for w in seg.words or []:
+            if bleeps is not None and is_bleep(w.word):
+                bleeps.append((w.start, w.end))
             text = clean_word(w.word)
             if text:
                 words.append((w.start, w.end, text))
@@ -291,7 +307,8 @@ def render(src, dst, hook_text=None, conf=None, start=0.0, duration=None,
         band_bottom = (H + W * 9 // 16) // 2
         cap_y, hook_center = band_bottom + 90, None
 
-    sub = transcribe(src, conf, caption_y=cap_y, vocab=vocab) \
+    bleeps = []
+    sub = transcribe(src, conf, caption_y=cap_y, vocab=vocab, bleeps=bleeps) \
         if r["captions"]["enabled"] else None
 
     post = []
@@ -316,6 +333,15 @@ def render(src, dst, hook_text=None, conf=None, start=0.0, duration=None,
     ]
     if info["has_audio"]:
         af = "loudnorm=I=-14:TP=-1.5:LRA=11" if r["loudnorm"] else "anull"
+        if bleeps and r.get("bleep", True):
+            # times are from the source; the output starts at `start`
+            mutes = ",".join(
+                f"volume=enable='between(t,{max(0.0, a - start - 0.05):.2f},"
+                f"{b - start + 0.05:.2f})':volume=0" for a, b in bleeps
+                if b - start > 0)
+            if mutes:
+                af = mutes + "," + af
+                log.info("audio: muted %d strong words", len(bleeps))
         cmd += ["-af", af, "-c:a", "aac", "-b:a", r["audio_bitrate"]]
     else:
         cmd += ["-an"]

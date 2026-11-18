@@ -122,6 +122,7 @@ sources:
     link: "twitch.tv/clix"
     permission: campaign
     campaign: "$5,000 Clix GTA VI Marathon Pool"
+    priority: 2                           # best performer so far: 2x clips, posts first
     campaign_url: "https://contentrewards.com/c/campaigns/985dc674-c75e-44fc-ac87-1b1506324389"
     pool: true                            # 400K total views to qualify
     platforms_allowed: [youtube, tiktok, instagram]
