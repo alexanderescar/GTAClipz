@@ -90,6 +90,7 @@ safety:
 # ── Publishing ────────────────────────────────────────────────────────────
 publish:
   approved_max_age_h: 48    # approved clips not posted within 48h are dropped (stale)
+  near_dup_s: 240           # two approved clips <4 min apart in one stream: keep the better one
   youtube:
     enabled: true
     privacy: "public"

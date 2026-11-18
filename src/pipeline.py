@@ -294,6 +294,32 @@ def stage_publish(conn, conf):
                 log.error("tiktok queue sync failed: %s", e)
 
 
+def trim_approved(conn, conf):
+    """Clean the approved queue (nothing is deleted; the state just changes):
+      - stream clips scoring under longform.min_score (made before the floor)
+      - near-duplicates: two clips from the same stream starting within
+        publish.near_dup_s seconds of each other -> keep the higher score."""
+    floor = conf["longform"].get("min_score", 0)
+    gap = conf["publish"].get("near_dup_s", 240)
+    low = conn.execute(
+        "UPDATE clips SET state='trimmed_low' WHERE state='approved' AND lane='publish' "
+        "AND source_kind='vod_chat' AND score < ?", (floor,)).rowcount
+    dup = 0
+    kept = {}
+    for c in conn.execute("SELECT clip_id, vod_id, vod_start FROM clips WHERE "
+                          "state='approved' AND lane='publish' AND vod_id IS NOT NULL "
+                          "AND vod_start IS NOT NULL ORDER BY score DESC").fetchall():
+        near = [t for t in kept.get(c[1], []) if abs(t - c[2]) < gap]
+        if near:
+            conn.execute("UPDATE clips SET state='trimmed_dup' WHERE clip_id=?", (c[0],))
+            dup += 1
+        else:
+            kept.setdefault(c[1], []).append(c[2])
+    if low or dup:
+        log.info("publish: trimmed %d under the score floor, %d near-duplicates", low, dup)
+    conn.commit()
+
+
 def _publish_approved(conn, conf, chrome_tiktok):
     import tiktok_queue
     requeue_failed(conn)
@@ -307,6 +333,7 @@ def _publish_approved(conn, conf, chrome_tiktok):
     if n:
         log.info("publish: %d approved clips older than %dh expired", n, keep_h)
     conn.commit()
+    trim_approved(conn, conf)
     caps = conf["safety"]["max_posts_per_platform_per_day"]
     queue = rows(conn, "SELECT * FROM clips WHERE state='approved' AND "
                        "lane='publish' ORDER BY score DESC")
