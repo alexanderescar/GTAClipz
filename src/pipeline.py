@@ -363,7 +363,7 @@ def _publish_approved(conn, conf, chrome_tiktok):
                      ("published" if any_ok else "publish_failed", c["clip_id"]))
         conn.commit()
         if (posted and src.get("permission") == "campaign"
-                and conf["publish"].get("submit_now_alerts", True)):
+                and conf["publish"].get("submit_now_alerts", not chrome_tiktok)):
             submit_now_alert(c, src, posted, credit)
 
 

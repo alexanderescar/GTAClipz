@@ -104,10 +104,12 @@ publish:
     #               WITH the full caption + campaign tag (src/tiktok_queue.py)
     # inbox_draft = API drop into the TikTok inbox; you add the caption by hand
     # direct_post = needs TikTok's audit
-    mode: "chrome"
-  # The hourly Claude task submits every campaign link itself, so the
-  # "SUBMIT NOW" phone pings are off. Set true to get them back.
-  submit_now_alerts: false
+    # Switched to "chrome" automatically by the hourly Claude task the first
+    # time it runs with the TikTok-posting instructions.
+    mode: "inbox_draft"
+  # "SUBMIT NOW" phone pings: on while you post TikToks by hand (inbox_draft),
+  # off in chrome mode (Claude posts + submits). Set true/false to override.
+  # submit_now_alerts: true
   # Campaign clips only go live when you can submit the link within 30 min.
   # Approved clips wait (in order) until the window opens. Edit to your day.
   campaign_hours:
