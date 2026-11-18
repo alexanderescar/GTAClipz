@@ -1,0 +1,62 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# DATED REMINDERS — each one is posted once (as an @mention comment in the
+# "📌 Your to-do reminders" issue) on the first robot run after `at`.
+# Times are Eastern (-05:00). Add your own: give it a new unique id.
+#   only_if_no_vods_from: <source_id>  → only fire if the robot found nothing
+# ─────────────────────────────────────────────────────────────────────────────
+reminders:
+  - id: lacy-discord-question
+    at: "2026-11-17T20:00:00-05:00"
+    title: "Ask the Lacy campaign Discord one question (before launch)"
+    message: |
+      Every clip gets auto-generated captions and a hook title. The Lacy brief
+      is vague about "AI-generated content". In the campaign's Discord, ask:
+      "Are clips with auto-generated captions and a text hook allowed?"
+      If they say no, tell Claude and captions get switched off for Lacy only.
+
+  - id: launch-day
+    at: "2026-11-18T07:00:00-05:00"
+    title: "Launch day — 2-minute checklist"
+    message: |
+      GTA 6 is unlocking. Today:
+      1. GitHub phone app installed, signed in, push notifications ON
+         (Settings → Notifications → Participating / @mentions).
+      2. When "clips waiting" pings arrive, tick ✅ / ❌ in the issue.
+      3. When a "🚨 SUBMIT NOW" ping arrives: open TikTok → Drafts → post it,
+         then submit every link on Content Rewards within 30 minutes.
+      4. Clips only post 8 am–11 pm ET (change in config/settings.yml).
+
+  - id: ruckus-stream-day
+    at: "2026-11-19T11:00:00-05:00"
+    title: "RUCKUS: Dom streams GTA 6 today"
+    message: |
+      Only today's Kick stream counts for the RUCKUS campaign. The robot picks
+      it up after the stream ends. For these clips, on TikTok turn ON
+      Content disclosure → "Paid partnership" before you post the draft.
+      YouTube gets the paid-promotion label automatically. No Instagram.
+
+  - id: ruckus-vod-missing
+    at: "2026-11-20T09:00:00-05:00"
+    only_if_no_vods_from: cr_ruckus_dom
+    title: "RUCKUS: the robot couldn't find Dom's Nov 19 stream"
+    message: |
+      Kick probably blocked the robot. Open kick.com/dasgasd3m → Videos,
+      copy the Nov 19 stream link and paste it into config/vod_queue.yml
+      (the template is already in the file — just fill in the url).
+
+  - id: oracle-move
+    at: "2026-11-24T19:00:00-05:00"
+    title: "Move the robot off GitHub to Oracle Cloud (free)"
+    message: |
+      Launch week is done. GitHub's free servers are meant for building
+      software, so a 24/7 clip factory there is a gray area. Ask Claude:
+      "walk me through moving the clip factory to Oracle Cloud Always Free."
+
+  - id: auto-approve-day
+    at: "2026-11-25T09:00:00-05:00"
+    title: "Auto-approve switches on today"
+    message: |
+      If you've made 40+ ✅/❌ decisions, the robot now approves clips on its
+      own, using the score where you approved 80%+ of clips. Skim today's
+      posts. To stay manual, set review.mode: manual and remove
+      auto_switch_after in config/settings.yml (or ask Claude).

@@ -1,21 +1,22 @@
 name: GTA6 Clip Factory
 
-# Free tier: unlimited Actions minutes on a PUBLIC repo, 2,000 min/month on a
-# private one. A full discover+render+publish cycle costs ~4-8 min, so even on
-# a private repo you get ~250 cycles/month. Launch week wants the 30-min
-# cadence; after that, drop to hourly.
+# Heartbeat: GitHub's cron is best-effort and often skips runs, so each "run"
+# chains the next one itself (~15 min apart). Between full cycles it checks
+# your ✅ ticks every ~2.5 min and posts approved clips right away.
+# The cron below is only a safety net that restarts the chain if it breaks.
 on:
   schedule:
-    - cron: "*/30 * * * *"      # every 30 min, UTC
+    - cron: "7,37 * * * *"      # off the :00/:30 rush hour, UTC
   workflow_dispatch:
     inputs:
       mode:
-        description: "run | status | r2test | twitchtest | igtest | yttest | tiktoktest | e2etest | discover | vods | longform | download | render | review | publish"
+        description: "run | approve | status | kicktest | r2test | twitchtest | igtest | yttest | tiktoktest | e2etest | discover | vods | longform | download | render | review | publish"
         default: "run"
 
 permissions:
   contents: write      # commit the state ledger back
   issues: write        # the daily clip-review issue
+  actions: write       # lets a run start the next one (the heartbeat)
 
 concurrency:
   group: clip-factory          # never let two runs fight over state
@@ -24,7 +25,21 @@ concurrency:
 jobs:
   factory:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 75
+    env:
+      TWITCH_CLIENT_ID:      ${{ secrets.TWITCH_CLIENT_ID }}
+      TWITCH_CLIENT_SECRET:  ${{ secrets.TWITCH_CLIENT_SECRET }}
+      IG_USER_ID:            ${{ secrets.IG_USER_ID }}
+      IG_ACCESS_TOKEN:       ${{ secrets.IG_ACCESS_TOKEN }}
+      TIKTOK_CLIENT_KEY:     ${{ secrets.TIKTOK_CLIENT_KEY }}
+      TIKTOK_CLIENT_SECRET:  ${{ secrets.TIKTOK_CLIENT_SECRET }}
+      TIKTOK_REFRESH_TOKEN:  ${{ secrets.TIKTOK_REFRESH_TOKEN }}
+      R2_ACCOUNT_ID:         ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID:      ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY:  ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      GITHUB_TOKEN:          ${{ github.token }}   # review issues; built in, no setup
+      MODE: ${{ inputs.mode || 'run' }}
+      CYCLE_SECONDS: "900"   # full cycle every ~15 min
     steps:
       - uses: actions/checkout@v4
 
@@ -62,44 +77,31 @@ jobs:
           printf '%s' "$YT_TOKEN_JSON" > state/youtube_token.json
 
       - name: Run pipeline
-        env:
-          TWITCH_CLIENT_ID:      ${{ secrets.TWITCH_CLIENT_ID }}
-          TWITCH_CLIENT_SECRET:  ${{ secrets.TWITCH_CLIENT_SECRET }}
-          IG_USER_ID:            ${{ secrets.IG_USER_ID }}
-          IG_ACCESS_TOKEN:       ${{ secrets.IG_ACCESS_TOKEN }}
-          TIKTOK_CLIENT_KEY:     ${{ secrets.TIKTOK_CLIENT_KEY }}
-          TIKTOK_CLIENT_SECRET:  ${{ secrets.TIKTOK_CLIENT_SECRET }}
-          TIKTOK_REFRESH_TOKEN:  ${{ secrets.TIKTOK_REFRESH_TOKEN }}
-          R2_ACCOUNT_ID:         ${{ secrets.R2_ACCOUNT_ID }}
-          R2_ACCESS_KEY_ID:      ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY:  ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          GITHUB_TOKEN:          ${{ github.token }}   # review issues; built in, no setup
-        run: python src/pipeline.py "${{ inputs.mode || 'run' }}"
+        timeout-minutes: 50
+        run: |
+          echo "START=$(date +%s)" >> "$GITHUB_ENV"
+          python src/pipeline.py "$MODE"
 
       - name: Persist state
-        # The SQLite ledger is what stops duplicate posts across runs.
-        # Committing it back is the simplest free persistence that survives
-        # a cold runner. (Swap for an R2 object if the repo churn annoys you.)
+        if: always()
+        run: cp scripts/persist.sh /tmp/persist.sh && bash /tmp/persist.sh
+
+      - name: Quick approvals until the next cycle
+        if: env.MODE == 'run' && !cancelled()
         run: |
-          git config user.name  "clip-factory"
-          git config user.email "actions@users.noreply.github.com"
-          # Someone may have pushed code while this run was working. Keep THIS
-          # run's ledger (it knows what was just posted), take everything else
-          # from the latest main, and retry if another push races us.
-          mkdir -p /tmp/keep
-          for f in state/factory.db state/tiktok.enc; do [ -e "$f" ] && cp "$f" /tmp/keep/; done
-          git diff -- config/settings.yml > /tmp/keep/settings.patch || true
-          for attempt in 1 2 3; do
-            git fetch -q origin main
-            git reset -q --hard origin/main
-            for f in factory.db tiktok.enc; do [ -e /tmp/keep/$f ] && cp /tmp/keep/$f state/$f; done
-            [ -s /tmp/keep/settings.patch ] && (git apply --3way /tmp/keep/settings.patch || echo "settings patch skipped")
-            for f in state/factory.db state/tiktok.enc config/settings.yml; do [ -e "$f" ] && git add "$f"; done
-            git diff --staged --quiet && { echo "nothing to save"; break; }
-            git commit -qm "state: $(date -u +%FT%TZ) [skip ci]"
-            git push -q && { echo "state saved"; break; }
-            echo "push raced, retrying ($attempt)"; sleep 5
+          while [ $(( $(date +%s) - START + 150 )) -lt "$CYCLE_SECONDS" ]; do
+            sleep 150
+            python src/pipeline.py approve || true
+            bash /tmp/persist.sh
           done
+
+      - name: Start the next cycle
+        if: env.MODE == 'run' && !cancelled()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/workflows/clip-factory.yml/dispatches" \
+            -f ref=main -f "inputs[mode]=run" && echo "next cycle queued"
 
       - name: Upload failed renders for inspection
         if: failure()

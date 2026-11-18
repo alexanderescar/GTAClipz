@@ -313,7 +313,7 @@ def status(conn):
     print()
 
 
-STAGES = ["discover", "vods", "longform", "download", "render", "review", "publish"]
+STAGES = ["discover", "vods", "longform", "download", "render", "review", "publish", "remind"]
 
 
 def main():
@@ -345,7 +345,7 @@ def main():
         return r2.selftest()
     # "approve" = the quick check between full runs: read your ticks, post
     want = (STAGES if mode == "run" else
-            ["review", "publish"] if mode == "approve" else [mode])
+            ["review", "publish", "remind"] if mode == "approve" else [mode])
     for st in want:
         try:
             if st == "discover":
@@ -366,6 +366,9 @@ def main():
                 review.stage(conn, conf)
             elif st == "publish":
                 stage_publish(conn, conf)
+            elif st == "remind":
+                import reminders
+                reminders.stage(conn, conf)
         except Exception as e:  # noqa: BLE001  — one bad stage must not kill the run
             log.error("stage %s crashed: %s", st, e)
     janitor(conf)

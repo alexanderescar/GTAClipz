@@ -57,7 +57,7 @@ def todays_issue(label):
     return _gh("POST", "/issues", json={
         "title": title, "labels": [label], "assignees": [owner],
         "body": ("Tick ✅ to post a clip, ❌ to drop it. Untouched clips expire.\n"
-                 "Your ticks are picked up on the next run. Campaign clips "
+                 "Your ticks are picked up within ~3 minutes. Campaign clips "
                  "post during your campaign hours (settings.yml) so you can "
                  "submit the link in time.\n\n")})
 

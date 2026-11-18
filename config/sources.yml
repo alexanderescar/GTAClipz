@@ -39,6 +39,12 @@ sources:
     youtube_channel: "https://www.youtube.com/@Tomovids/streams"
     title_must_include: ["gta"]           # GTA VI streams only
     title_must_exclude: ["trailer", "reaction"]   # campaign wants GTA VI gameplay
+    milestone:                            # brief: proof of audience at 2K views
+      views: 2000
+      task: |
+        In YouTube Studio open this video → Analytics → Audience, screenshot it,
+        and post it in the TOMO campaign Discord. Keep likes visible and leave
+        the clip up for at least 30 days.
     footage_after: "2026-11-18T00:00:00-05:00"
     link: "youtube.com/@Tomovids"
     permission: campaign
