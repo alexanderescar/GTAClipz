@@ -208,6 +208,11 @@ def main():
 
     conf = cfg()
     conn = db()
+    from common import backlog_full
+    full = backlog_full(conn, conf)
+    if full:
+        log.info("backlog brake: %d clips already queued — not finding new ones", full)
+        return
     total = discover_local(conn, conf)
 
     cid = os.environ.get("TWITCH_CLIENT_ID")

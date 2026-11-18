@@ -296,6 +296,16 @@ def stage_publish(conn, conf):
 def _publish_approved(conn, conf, chrome_tiktok):
     import tiktok_queue
     requeue_failed(conn)
+    # Approved clips that couldn't post within N hours are stale: drop them so
+    # fresh ones go first (the loop below already posts highest score first).
+    keep_h = conf["publish"].get("approved_max_age_h", 48)
+    n = conn.execute(
+        "UPDATE clips SET state='expired_approved' WHERE state='approved' AND clip_id IN "
+        "(SELECT clip_id FROM decisions WHERE decision='approved' AND "
+        "decided_at < datetime('now', ?))", (f"-{keep_h} hours",)).rowcount
+    if n:
+        log.info("publish: %d approved clips older than %dh expired", n, keep_h)
+    conn.commit()
     caps = conf["safety"]["max_posts_per_platform_per_day"]
     for c in rows(conn, "SELECT * FROM clips WHERE state='approved' AND "
                         "lane='publish' ORDER BY score DESC LIMIT 20"):

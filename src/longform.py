@@ -216,7 +216,11 @@ def process_vod(conn, v, conf, room=None):
         limit = max(0, sc["clips_per_streamer_per_day"] -
                     scouted_today(conn, v["streamer"]))
     made = 0
-    for w in windows[:limit]:
+    floor = lf.get("min_score", 0) if v["lane"] == "publish" else 0
+    tries = limit + lf.get("extra_tries", 3)   # a few spares for clips under the floor
+    for w in windows[:tries]:
+        if made >= limit:
+            break
         cid = f"{v['vod_id']}@{int(w.start)}"
         if conn.execute("SELECT 1 FROM clips WHERE clip_id=?", (cid,)).fetchone():
             continue
@@ -228,6 +232,10 @@ def process_vod(conn, v, conf, room=None):
             log.error("window download failed %s: %s", cid, e)
             continue
         score = round(w.score * (1 + max(0.0, lift) / 20), 2)
+        if score < floor:
+            log.info("  %s score %.1f under floor %s — dropped", cid, score, floor)
+            dst.unlink(missing_ok=True)
+            continue
         conn.execute(
             """INSERT INTO clips (clip_id, source_id, streamer, platform, title,
                 url, views, duration, created_at, score, state, lane, source_kind,
@@ -266,6 +274,13 @@ def run():
     lf = conf["longform"]
     conn = db()
     conn.row_factory = __import__("sqlite3").Row
+    from common import backlog_full
+    full = backlog_full(conn, conf)
+    if full:
+        # Footage isn't skipped: the VODs keep their place and get scanned
+        # (best moments only) once the queue drains.
+        log.info("backlog brake: %d clips already queued — not cutting new ones", full)
+        return
     # publish lane first: those are the clips that can make money
     lanes = ("publish", "scout") if conf["scouting"].get("enabled") else ("publish",)
     todo = conn.execute(

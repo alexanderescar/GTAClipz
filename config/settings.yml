@@ -84,11 +84,12 @@ safety:
   skip_if_phash_seen: true          # never post the same moment twice
   max_posts_per_platform_per_day:
     youtube: 15
-    tiktok: 6
+    tiktok: 10
     instagram: 15
 
 # ── Publishing ────────────────────────────────────────────────────────────
 publish:
+  approved_max_age_h: 48    # approved clips not posted within 48h are dropped (stale)
   youtube:
     enabled: true
     privacy: "public"
@@ -128,6 +129,10 @@ storage:
   r2_public_base: "https://pub-bf2f85f4cf9e48589d4535e453491451.r2.dev"   # public, not secret
   keep_renders_days: 3
 
+# ── Production brake ──────────────────────────────────────────────────
+production:
+  backlog_brake: 20         # stop making clips while 20+ are approved/awaiting review
+
 # ── Long-form clipper (VOD -> moments) ────────────────────────────────────
 longform:
   enabled: true
@@ -141,7 +146,9 @@ longform:
   min_chat_messages: 200    # below this, chat is too thin -> audio fallback
   chat_min_ratio: 3.0       # a bin must be 3x the trailing 5-min median
   max_moments_per_chunk: 12
-  max_clips_per_chunk: 6    # publish lane: clips cut per VOD chunk
+  max_clips_per_chunk: 2    # publish lane: only the best 2 moments per VOD chunk
+  min_score: 20             # drop clips scoring under this (your approvals: 53% -> 62%)
+  extra_tries: 3            # spare moments to try when some fall under min_score
   pre_roll_s: 30            # chat reacts late; start the clip before the spike
   clip_len_s: 45
 

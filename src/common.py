@@ -207,3 +207,16 @@ def ensure_dirs():
     for p in ["raw", "render", "out", "raw/own"]:
         (WORK / p).mkdir(parents=True, exist_ok=True)
     (ROOT / "state").mkdir(exist_ok=True)
+
+
+def backlog_full(conn, conf):
+    """Backlog brake: when the clips already approved or waiting for review
+    would fill about two days of posting, stop making new ones until the
+    queue drains. Returns the count when braking, else 0."""
+    limit = (conf.get("production") or {}).get("backlog_brake", 0)
+    if not limit:
+        return 0
+    n = conn.execute("SELECT COUNT(*) FROM clips WHERE lane='publish' AND state IN "
+                     "('approved','pending_review','rendered','downloaded','discovered')"
+                     ).fetchone()[0]
+    return n if n >= limit else 0
