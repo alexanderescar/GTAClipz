@@ -95,11 +95,16 @@ def stage_download(conn, conf):
 # ── render ───────────────────────────────────────────────────────────────────
 def stage_render(conn, conf):
     import dedupe
+    import time
     cap = cfg("sources").get("defaults", {}).get("max_clip_seconds", 59)
-    done = 0
+    done, t0 = 0, time.time()
+    budget = conf["render"].get("budget_s", 1080)
     for c in rows(conn, "SELECT * FROM clips WHERE state='downloaded' "
                         "ORDER BY CASE lane WHEN 'publish' THEN 0 ELSE 1 END, "
                         "score DESC LIMIT 12"):
+        if time.time() - t0 > budget:
+            log.warning("render budget used; %s waits", c["clip_id"])
+            break
         src_path = (pathlib.Path(c["url"]) if c["platform"] in ("local", "vod")
                     else WORK / "raw" / f"{safe(c['clip_id'])}.mp4")
         if not src_path.exists():

@@ -49,6 +49,7 @@ render:
   width: 1080
   height: 1920
   fps: 30
+  budget_s: 1080            # stop rendering after 18 min so posting still runs
   video_bitrate: "6M"
   audio_bitrate: "160k"
   layout: "blur_pad"        # blur_pad | center_crop | gameplay_top
@@ -115,7 +116,8 @@ longform:
   max_vods_per_run: 3
   max_chunk_s: 14400        # scan at most 4h of a VOD per run (chat download time)
   vod_budget_s: 600         # give up on one VOD after 10 min (it hung a cycle once)
-  stage_budget_s: 1500      # all long-form work per cycle; posting runs after
+  stage_budget_s: 900       # all long-form work per cycle (15 min); posting runs after
+  max_clips_per_run: 8      # cut only what one cycle can render (raw cuts don't carry over)
   min_chunk_s: 600          # don't bother scanning <10 min of new footage
   live_margin_s: 300        # stay 5 min behind the live edge of a growing VOD
   min_chat_messages: 200    # below this, chat is too thin -> audio fallback

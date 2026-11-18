@@ -170,7 +170,7 @@ def find_windows(v, start, end, lf):
                                   **{**common, "offset": start})
 
 
-def process_vod(conn, v, conf):
+def process_vod(conn, v, conf, room=None):
     lf = conf["longform"]
     sc = conf["scouting"]
     dur = v["duration"] or 0
@@ -201,6 +201,8 @@ def process_vod(conn, v, conf):
     windows = find_windows(v, start, end, lf)
 
     limit = v["max_clips"] or lf["max_clips_per_chunk"]
+    if room is not None:
+        limit = min(limit, room)      # only cut what this cycle can render
     if v["lane"] == "scout":
         limit = max(0, sc["clips_per_streamer_per_day"] -
                     scouted_today(conn, v["streamer"]))
@@ -263,13 +265,14 @@ def run():
     total, t0 = 0, time.time()
     signal.signal(signal.SIGALRM, _alarm)
     for v in todo:
-        left = lf.get("stage_budget_s", 1500) - (time.time() - t0)
-        if left < 120:
+        left = lf.get("stage_budget_s", 900) - (time.time() - t0)
+        room = lf.get("max_clips_per_run", 8) - total
+        if left < 120 or room <= 0:
             log.info("long-form: time budget used, leaving the rest for next cycle")
             break
         signal.alarm(int(min(lf.get("vod_budget_s", 600), left)))
         try:
-            total += process_vod(conn, v, conf)
+            total += process_vod(conn, v, conf, room=room)
         except VodTimeout:
             conn.rollback()
             if v["lane"] == "publish":
