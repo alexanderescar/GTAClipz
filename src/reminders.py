@@ -51,8 +51,10 @@ def _now():
 
 def reminders_issue():
     import review
-    for iss in review._gh("GET", "/issues", params={"labels": LABEL, "state": "open"}):
+    for iss in review._gh("GET", "/issues", params={"labels": LABEL, "state": "all"}):
         if iss["title"] == TITLE:
+            if iss["state"] != "open":
+                review._gh("PATCH", f"/issues/{iss['number']}", json={"state": "open"})
             return iss["number"]
     iss = review._gh("POST", "/issues", json={
         "title": TITLE, "labels": [LABEL], "assignees": [owner()],

@@ -49,9 +49,11 @@ def _gh(method, path, **kw):
 
 def todays_issue(label):
     title = f"Clip review — {dt.date.today().isoformat()}"
-    for iss in _gh("GET", "/issues", params={"labels": label, "state": "open",
+    for iss in _gh("GET", "/issues", params={"labels": label, "state": "all",
                                              "per_page": 30}):
         if iss["title"] == title:
+            if iss["state"] != "open":      # you closed it: reopen, don't fork
+                iss = _gh("PATCH", f"/issues/{iss['number']}", json={"state": "open"})
             return iss
     owner = os.environ.get("GITHUB_REPOSITORY", "/").split("/")[0]
     return _gh("POST", "/issues", json={
@@ -156,10 +158,18 @@ def stage(conn, conf):
                             "lane='publish'").fetchone():
             return
 
-    # 1. read decisions from open review issues
+    # 1. read decisions from every issue that still holds waiting clips,
+    #    open OR closed (closing an issue must never lose your ticks)
+    nums = {row[0] for row in conn.execute(
+        "SELECT DISTINCT review_issue FROM clips WHERE state='pending_review' "
+        "AND review_issue IS NOT NULL")}
+    issues = []
     try:
         issues = _gh("GET", "/issues", params={"labels": r["issue_label"],
                                                "state": "open", "per_page": 30})
+        seen = {i["number"] for i in issues}
+        for n in sorted(nums - seen):
+            issues.append(_gh("GET", f"/issues/{n}"))
     except RuntimeError as e:
         log.warning("review queue offline: %s", e)
         return
