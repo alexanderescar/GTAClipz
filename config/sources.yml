@@ -156,7 +156,7 @@ sources:
     publish_after: "2026-11-18T00:00:00-05:00"
     footage_after: "2026-11-18T00:00:00-05:00"
     longform: true
-    enabled: false                        # flip to true once joined on Content Rewards
+    enabled: true                         # joined on Content Rewards Nov 18, 1:36 PM ET
 
   - id: cr_jason
     platform: twitch
