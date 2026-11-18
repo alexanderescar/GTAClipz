@@ -72,7 +72,7 @@ sources:
     pool: true                            # 750K total views to qualify; split by views
     platforms_allowed: [youtube, tiktok, instagram]
     credit_template: "LACY's GTA 6 marathon — twitch.tv/lacy"
-    hashtags: ["#Lacy", "#gta6"]
+    hashtags: ["#LACY", "#gta6"]          # rules spell it #LACY
     watermark: false                      # rules: "Logos of any kind are not allowed"
     hooks:
       - "LACY in GTA 6"
