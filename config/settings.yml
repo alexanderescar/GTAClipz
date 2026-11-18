@@ -102,6 +102,10 @@ publish:
     timezone: "America/New_York"
     start: "08:00"
     end: "23:00"
+  # Campaign clips post only in this slice of each hour; the submit task in
+  # your Chrome runs at :41, so every link is <30 min old when it's submitted.
+  campaign_minutes: [20, 35]
+  campaign_clips_per_hour: 3
   # Stagger rather than dump: looks human, spreads the test across the day
   schedule_offsets_minutes: [0, 95, 190, 310, 430, 560, 700, 840]
 

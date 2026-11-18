@@ -185,6 +185,27 @@ def in_campaign_hours(conf, now=None):
         (t >= h["start"] or t < h["end"])
 
 
+def campaign_slot_open(conn, conf, now=None):
+    """Campaign clips go out only inside campaign hours AND inside the posting
+    slice of the hour, and at most N per hour, so the hourly submit task in
+    your Chrome always finds them inside the 30-minute window."""
+    if not in_campaign_hours(conf, now):
+        return False
+    pub = conf["publish"]
+    lo, hi = pub.get("campaign_minutes") or [0, 60]
+    now = now or dt.datetime.now(dt.timezone.utc)
+    if not (lo <= now.minute < hi):
+        return False
+    cap = pub.get("campaign_clips_per_hour")
+    if cap:
+        start = now.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+        n = conn.execute("SELECT COUNT(DISTINCT clip_id) FROM posts WHERE status='ok' "
+                         "AND posted_at >= ?", (start,)).fetchone()[0]
+        if n >= cap:
+            return False
+    return True
+
+
 def stage_publish(conn, conf):
     caps = conf["safety"]["max_posts_per_platform_per_day"]
     for c in rows(conn, "SELECT * FROM clips WHERE state='approved' AND "
@@ -202,8 +223,8 @@ def stage_publish(conn, conf):
             conn.execute("UPDATE clips SET state='campaign_closed' WHERE clip_id=?",
                          (c["clip_id"],))
             continue
-        if src.get("permission") == "campaign" and not in_campaign_hours(conf):
-            continue                    # you'd miss the 30-min submit window
+        if src.get("permission") == "campaign" and not campaign_slot_open(conn, conf):
+            continue                    # wait for the next submit slot
         try:
             local = ensure_local(c, conf)
         except Exception as e:  # noqa: BLE001
