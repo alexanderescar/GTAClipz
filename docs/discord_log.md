@@ -10,3 +10,5 @@ One line per item: timestamp (ET) | server/channel | author | summary
 - 2026-11-18 14:19 | Reach Tickets (DM) | Reach Tickets bot | Ticket general-support-viceclipzz (#0393) auto-closed: no reply from creator in 6h
 - 2026-11-18 14:23 | Reach / #announcements | Dylan (Reach staff) | New $4,000 Clix x JBL campaign live, $1/1k views (not in config)
 - 2026-11-18 15:01 | Reach / #announcements | Dylan (Reach staff) | New Lauren Hamden GTA 6 $5,000 campaign, $1.50/1k, dedicated account (not in config)
+- 2026-11-19 00:06 | Reach / #announcements | speh (Reach staff) | New AsianJeff $2,500 GTA 6 campaign live, $1/1k views (not in config)
+- 2026-11-19 03:10 | Clipping Nation / #campaign-updates | Matt (staff) | Tomo payout: submit demographics via support ticket "submit demographics" only (flagged RULE CHANGE?)
