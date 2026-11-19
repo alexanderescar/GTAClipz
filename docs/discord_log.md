@@ -12,3 +12,4 @@ One line per item: timestamp (ET) | server/channel | author | summary
 - 2026-11-18 15:01 | Reach / #announcements | Dylan (Reach staff) | New Lauren Hamden GTA 6 $5,000 campaign, $1.50/1k, dedicated account (not in config)
 - 2026-11-19 00:06 | Reach / #announcements | speh (Reach staff) | New AsianJeff $2,500 GTA 6 campaign live, $1/1k views (not in config)
 - 2026-11-19 03:10 | Clipping Nation / #campaign-updates | Matt (staff) | Tomo payout: submit demographics via support ticket "submit demographics" only (flagged RULE CHANGE?)
+- 2026-11-19 09:22 | Clipping Nation / #campaign-updates | Matt (staff) | Bobby GTA VI: min views lowered to 1,500, CPM raised to $1.50, ~$970 left, Miami-stream GTA VI content only (flagged RULE CHANGE?)
