@@ -12,3 +12,9 @@ UTC time | platform | link | campaign
 - 2026-11-18T19:43:20Z | instagram | https://www.instagram.com/reel/17893928298456412/ | $12,500 LACY GTA VI Marathon Pool
 - 2026-11-18T19:43:20Z | instagram | https://www.instagram.com/reel/18120634204800300/ | $12,500 LACY GTA VI Marathon Pool
 - 2026-11-18T19:47:39Z | tiktok | https://www.tiktok.com/@gtavicecityclipzz/video/7709599581721464095 | $12,500 LACY GTA VI Marathon Pool
+- 2026-11-19T00:44:10Z | instagram | https://www.instagram.com/reel/18130289722867230/ | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-19T00:44:10Z | instagram | https://www.instagram.com/reel/18150244936597582/ | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-19T00:45:20Z | youtube | https://youtube.com/shorts/OxaOfa7Tp8I | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-19T00:45:20Z | youtube | https://youtube.com/shorts/T-OxFmry4Fk | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-19T00:45:20Z | youtube | https://youtube.com/shorts/RaN1xWrGdbg | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-19T00:54:18Z | tiktok | https://www.tiktok.com/@gtavicecityclipzz/video/7709677574003199262 | $5,000 Clix GTA VI Marathon Pool
