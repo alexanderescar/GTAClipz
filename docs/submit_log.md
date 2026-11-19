@@ -43,3 +43,4 @@ UTC time | platform | link | campaign
 - 2026-11-19T03:44:02Z | instagram | https://www.instagram.com/reel/18139690318653444/ | $12,500 LACY GTA VI Marathon Pool
 - 2026-11-19T03:44:02Z | youtube | https://youtube.com/shorts/A9wQua5586A | $12,500 LACY GTA VI Marathon Pool
 - 2026-11-19T03:45:21Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7709723491293072671 | $12,500 LACY GTA VI Marathon Pool
+- 2026-11-19T03:46:18Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7709723765189496095 | $12,500 LACY GTA VI Marathon Pool
