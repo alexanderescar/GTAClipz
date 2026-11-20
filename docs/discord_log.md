@@ -14,3 +14,5 @@ One line per item: timestamp (ET) | server/channel | author | summary
 - 2026-11-19 03:10 | Clipping Nation / #campaign-updates | Matt (staff) | Tomo payout: submit demographics via support ticket "submit demographics" only (flagged RULE CHANGE?)
 - 2026-11-19 09:22 | Clipping Nation / #campaign-updates | Matt (staff) | Bobby GTA VI: min views lowered to 1,500, CPM raised to $1.50, ~$970 left, Miami-stream GTA VI content only (flagged RULE CHANGE?)
 - 2026-11-19 17:51 | Reach / #announcements | speh (Reach staff) | New LUXDROP $7,500 logo campaign: any GTA 6 content + Luxdrop logo, $0.75/1k (not in config)
+- 2026-11-19 ~17:52 | Reach / #announcements | speh (Reach staff) | LUXDROP follow-up: "go clip ANY streamer streaming gta 6" (no change)
+- 2026-11-19 21:08 | Reach / #announcements | speh (Reach staff) | New $7,500 Silky Pool campaign (Silky GTA Marathon), no application, TT/IG/YT (not in config)
