@@ -16,3 +16,4 @@ One line per item: timestamp (ET) | server/channel | author | summary
 - 2026-11-19 17:51 | Reach / #announcements | speh (Reach staff) | New LUXDROP $7,500 logo campaign: any GTA 6 content + Luxdrop logo, $0.75/1k (not in config)
 - 2026-11-19 ~17:52 | Reach / #announcements | speh (Reach staff) | LUXDROP follow-up: "go clip ANY streamer streaming gta 6" (no change)
 - 2026-11-19 21:08 | Reach / #announcements | speh (Reach staff) | New $7,500 Silky Pool campaign (Silky GTA Marathon), no application, TT/IG/YT (not in config)
+- 2026-11-20 00:14 | Reach / #announcements | speh (Reach staff) | New Pilat $2,500 campaign (Pilat GTA/gambling streams), $1/1k, no application (not in config)
