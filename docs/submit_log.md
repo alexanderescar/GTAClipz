@@ -82,3 +82,5 @@ UTC time | platform | link | campaign
 - 2026-11-20T02:46:30Z | youtube (submitted) | https://youtube.com/shorts/z5Wn9Sw76O0 | $9,000 Jason Pool
 - 2026-11-20T02:46:30Z | youtube (submitted) | https://youtube.com/shorts/sYZ6xHUFYz8 | $9,000 Jason Pool
 - 2026-11-20T02:47:58Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710079817974025502 | $12,500 LACY GTA VI Marathon Pool
+- 2026-11-20T02:48:35Z | tiktok (submitted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710079817974025502 | $12,500 LACY GTA VI Marathon Pool
+- 2026-11-20T02:49:29Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710080238092438797 | $9,000 Jason Pool
