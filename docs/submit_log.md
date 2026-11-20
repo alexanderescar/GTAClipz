@@ -75,3 +75,10 @@ UTC time | platform | link | campaign
 - 2026-11-20T01:49:07Z | tiktok (submitted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710063504144813343 | $9,000 Jason Pool
 - 2026-11-20T01:49:07Z | tiktok (submitted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710064193898089758 | $9,000 Jason Pool
 - 2026-11-20T01:50:08Z | tiktok (submitted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710064482071891231 | $9,000 Jason Pool
+- 2026-11-20T02:46:30Z | instagram (submitted) | https://www.instagram.com/reel/18067559228686120/ | $12,500 LACY GTA VI Marathon Pool
+- 2026-11-20T02:46:30Z | youtube (submitted) | https://youtube.com/shorts/3beDVWKNGgc | $12,500 LACY GTA VI Marathon Pool
+- 2026-11-20T02:46:30Z | instagram (submitted) | https://www.instagram.com/reel/18039873572854740/ | $9,000 Jason Pool
+- 2026-11-20T02:46:30Z | instagram (submitted) | https://www.instagram.com/reel/18097683800657882/ | $9,000 Jason Pool
+- 2026-11-20T02:46:30Z | youtube (submitted) | https://youtube.com/shorts/z5Wn9Sw76O0 | $9,000 Jason Pool
+- 2026-11-20T02:46:30Z | youtube (submitted) | https://youtube.com/shorts/sYZ6xHUFYz8 | $9,000 Jason Pool
+- 2026-11-20T02:47:58Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710079817974025502 | $12,500 LACY GTA VI Marathon Pool
