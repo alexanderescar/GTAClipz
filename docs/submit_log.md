@@ -71,3 +71,4 @@ UTC time | platform | link | campaign
 - 2026-11-20T01:43:26Z | instagram (submitted) | https://www.instagram.com/reel/18099283577403899/ | $9,000 Jason Pool
 - 2026-11-20T01:44:41Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710063504144813343 | $9,000 Jason Pool
 - 2026-11-20T01:47:10Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710064193898089758 | $9,000 Jason Pool
+- 2026-11-20T01:48:18Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710064482071891231 | $9,000 Jason Pool
