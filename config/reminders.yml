@@ -54,11 +54,3 @@ reminders:
       software, so a 24/7 clip factory there is a gray area. Ask Claude:
       "walk me through moving the clip factory to Oracle Cloud Always Free."
 
-  - id: auto-approve-day
-    at: "2026-11-25T09:00:00-05:00"
-    title: "Auto-approve switches on today"
-    message: |
-      If you've made 40+ ✅/❌ decisions, the robot now approves clips on its
-      own, using the score where you approved 80%+ of clips. Skim today's
-      posts. To stay manual, set review.mode: manual and remove
-      auto_switch_after in config/settings.yml (or ask Claude).

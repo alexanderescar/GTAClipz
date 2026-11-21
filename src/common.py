@@ -210,13 +210,15 @@ def ensure_dirs():
 
 
 def backlog_full(conn, conf):
-    """Backlog brake: when the clips already approved or waiting for review
-    would fill about two days of posting, stop making new ones until the
-    queue drains. Returns the count when braking, else 0."""
+    """Backlog brake: when approved clips waiting to post (plus ones still being
+    made) would fill about two days of posting, stop making new ones until the
+    queue drains. Clips waiting for YOUR review don't count: if they did, the
+    robot stopped whenever reviews fell behind and the queue went stale.
+    Returns the count when braking, else 0."""
     limit = (conf.get("production") or {}).get("backlog_brake", 0)
     if not limit:
         return 0
     n = conn.execute("SELECT COUNT(*) FROM clips WHERE lane='publish' AND state IN "
-                     "('approved','pending_review','rendered','downloaded','discovered')"
+                     "('approved','rendered','downloaded','discovered')"
                      ).fetchone()[0]
     return n if n >= limit else 0

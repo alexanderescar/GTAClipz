@@ -132,7 +132,8 @@ storage:
 
 # ── Production brake ──────────────────────────────────────────────────
 production:
-  backlog_brake: 20         # stop making clips while 20+ are approved/awaiting review
+  backlog_brake: 20         # stop making clips while 20+ approved clips are waiting to post
+  review_cap: 25            # max clips waiting for your review; oldest drop off as fresh ones arrive
 
 # ── Long-form clipper (VOD -> moments) ────────────────────────────────────
 longform:
@@ -164,7 +165,7 @@ scouting:
 # ── Approval queue (week one: you approve; then it learns your taste) ─────
 review:
   mode: "manual"            # manual | auto
-  auto_switch_after: "2026-11-25"   # switch to auto on this date IF...
+  auto_switch_after: ""     # OFF: Alex approves every clip (score isn't reliable enough)
   min_decisions: 40                 # ...you've made at least this many decisions
   target_approval_rate: 0.80        # auto threshold = where you approved >=80%
   expire_hours: 36          # unanswered clips expire (stale by then anyway)

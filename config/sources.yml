@@ -89,6 +89,7 @@ sources:
         url: "https://contentrewards.com/c/campaigns/2886f500-f062-48dd-a9b4-9de5725f8186"
         note: "ONLY if 2+ CORE members (Lacy, Jason, Stable Ronaldo, Marlon, Adapt, Silky) are on screen"
     longform: true
+    priority: 0.5                         # Alex rejects most Lacy clips: half as many
     enabled: true
 
   - id: cr_ruckus_dom
@@ -113,6 +114,7 @@ sources:
     footage_before: "2026-11-20T12:00:00-08:00"
     publish_before: "2026-12-19T23:59:00-08:00"
     longform: true
+    brake_exempt: true                    # only the Nov 19 stream counts: don't let the brake miss it
     enabled: true
 
   - id: cr_clix_gta

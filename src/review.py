@@ -181,6 +181,8 @@ def is_auto(conf, conn):
         return True
     n = conn.execute("SELECT COUNT(*) FROM decisions WHERE decision IN "
                      "('approved','rejected')").fetchone()[0]
+    if not r.get("auto_switch_after"):          # Alex: stay manual (Nov 20)
+        return False
     return (dt.date.today().isoformat() >= r["auto_switch_after"]
             and n >= r["min_decisions"])
 
@@ -235,6 +237,19 @@ def stage(conn, conf):
                           "queued_at < ?", (cutoff,)).fetchall():
         record(conn, c, "expired")
     conn.commit()
+
+    # 2b. review cap: keep the list you review short and fresh — when more
+    #     than review_cap clips are waiting, the oldest ones drop off
+    cap = conf.get("production", {}).get("review_cap", 0)
+    if cap:
+        waiting = conn.execute("SELECT COUNT(*) FROM clips WHERE state IN "
+                               "('pending_review','rendered') AND lane='publish'"
+                               ).fetchone()[0]
+        if waiting > cap:
+            for c in conn.execute("SELECT * FROM clips WHERE state='pending_review' "
+                                  "ORDER BY queued_at LIMIT ?", (waiting - cap,)).fetchall():
+                record(conn, c, "expired")
+            conn.commit()
 
     # 3. queue newly rendered clips
     new = conn.execute("SELECT * FROM clips WHERE state='rendered' AND "

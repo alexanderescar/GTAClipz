@@ -212,7 +212,8 @@ def process_vod(conn, v, conf, room=None):
     limit = v["max_clips"] or lf["max_clips_per_chunk"]
     if v["lane"] == "publish":
         from common import source_by_id
-        limit *= int((source_by_id(v["source_id"]) or {}).get("priority", 1))
+        limit = max(1, round(limit * float((source_by_id(v["source_id"]) or {})
+                                          .get("priority", 1))))
     if room is not None:
         limit = min(limit, room)      # only cut what this cycle can render
     if v["lane"] == "scout":
@@ -277,13 +278,17 @@ def run():
     lf = conf["longform"]
     conn = db()
     conn.row_factory = __import__("sqlite3").Row
-    from common import backlog_full
+    from common import backlog_full, source_by_id, sources
     full = backlog_full(conn, conf)
     if full:
         # Footage isn't skipped: the VODs keep their place and get scanned
-        # (best moments only) once the queue drains.
-        log.info("backlog brake: %d clips already queued — not cutting new ones", full)
-        return
+        # (best moments only) once the queue drains. Time-limited campaigns
+        # (brake_exempt: true) keep going so their window isn't missed.
+        exempt = [s["id"] for s in sources() if s.get("brake_exempt")]
+        log.info("backlog brake: %d clips already queued — only cutting %s",
+                 full, exempt or "nothing")
+        if not exempt:
+            return
     # publish lane first: those are the clips that can make money
     lanes = ("publish", "scout") if conf["scouting"].get("enabled") else ("publish",)
     from common import source_by_id
@@ -292,8 +297,10 @@ def run():
         "ORDER BY CASE lane WHEN 'publish' THEN 0 ELSE 1 END, updated_at"
         % ",".join("?" * len(lanes)), lanes).fetchall()
     # Higher-priority streamers (priority: in sources.yml) get scanned first.
-    todo = sorted(todo, key=lambda v: -int((source_by_id(v["source_id"]) or {})
-                                           .get("priority", 1)))[:lf["max_vods_per_run"]]
+    if full:
+        todo = [v for v in todo if (source_by_id(v["source_id"]) or {}).get("brake_exempt")]
+    todo = sorted(todo, key=lambda v: -float((source_by_id(v["source_id"]) or {})
+                                             .get("priority", 1)))[:lf["max_vods_per_run"]]
     total, t0 = 0, time.time()
     signal.signal(signal.SIGALRM, _alarm)
     for v in todo:
