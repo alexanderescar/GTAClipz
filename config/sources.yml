@@ -160,6 +160,142 @@ sources:
     longform: true
     enabled: true                         # joined on Content Rewards Nov 18, 1:36 PM ET
 
+  - id: cr_kaicenat
+    platform: twitch
+    streamer: "Kai Cenat"
+    twitch_login: "kaicenat"
+    link: "twitch.tv/kaicenat"
+    permission: campaign
+    campaign: "Kai Cenat $10,000 GTA 6 Pool"
+    campaign_url: "https://contentrewards.com/c/campaigns/1d2bcb00-c904-415f-aa82-f95b96baad86"
+    platforms_allowed: [youtube, tiktok, instagram]
+    credit_template: "Kai Cenat's GTA 6 marathon — twitch.tv/kaicenat"
+    hashtags: ["#KaiCenat", "#gta6"]
+    watermark: false
+    hooks: ["Kai Cenat in GTA 6", "Kai Cenat's GTA 6 marathon", "Kai reacts in GTA 6"]
+    title_must_include: ["gta"]
+    publish_after: "2026-11-20T00:00:00-05:00"
+    footage_after: "2026-11-19T00:00:00-05:00"
+    longform: true
+    pool: true                            # 1K views per clip, 750K total to qualify; very crowded (344 clippers)
+    enabled: true
+
+  - id: cr_diegoloveless
+    platform: twitch
+    streamer: "DiegoLoveless"
+    twitch_login: "diegoloveless"
+    link: "twitch.tv/diegoloveless"
+    permission: campaign
+    campaign: "DiegoLoveless GTA 6 Clipping (ClipLaunch)"
+    campaign_url: "https://contentrewards.com/c/campaigns/5d37d3dd-adf3-401f-9c62-24bb54d5087a"
+    platforms_allowed: [youtube, tiktok, instagram]
+    credit_template: "Watch Diego live — twitch.tv/diegoloveless"
+    hashtags: ["#DiegoLoveless", "#gta6"]
+    watermark: false
+    hooks: ["DiegoLoveless in GTA 6", "Diego speedruns GTA 6", "DiegoLoveless reacts in GTA 6"]
+    title_must_include: ["gta"]
+    publish_after: "2026-11-20T00:00:00-05:00"
+    footage_after: "2026-11-19T00:00:00-05:00"
+    longform: true
+    # rules: GTA content from his Twitch only; twitch.tv/diegoloveless on screen or in caption;
+    # likes visible; $1/1K, paid from 1K views
+    enabled: true
+
+  - id: cr_asianjeff
+    platform: twitch
+    streamer: "AsianJeff"
+    twitch_login: "asianjeff"
+    link: "twitch.tv/asianjeff"
+    permission: campaign
+    campaign: "$2,500 AsianJeff Clipping (Reach)"
+    campaign_url: "https://contentrewards.com/c/campaigns/bbd3a963-9a23-457c-bc15-6697971d9902"
+    platforms_allowed: [youtube, tiktok, instagram]
+    credit_template: "AsianJeff's GTA 6 playthrough — twitch.tv/asianjeff"
+    hashtags: ["#asianjeff", "#gta6"]
+    watermark: false
+    hooks: ["AsianJeff in GTA 6", "AsianJeff plays GTA 6", "AsianJeff reacts in GTA 6"]
+    title_must_include: ["gta"]
+    publish_after: "2026-11-20T00:00:00-05:00"
+    footage_after: "2026-11-19T00:00:00-05:00"
+    longform: true
+    # Reach rules: GTA 6 playthrough from Nov 19 only, no logos, $1/1K, 10K views before payout
+    enabled: true
+
+  - id: cr_pilat
+    platform: twitch
+    streamer: "Pilat"
+    twitch_login: "pilat"
+    link: "twitch.tv/pilat"
+    permission: campaign
+    campaign: "$2,500 Pilat Clipping (Reach)"
+    campaign_url: "https://contentrewards.com/c/campaigns/5f22a72a-9598-4d10-897e-e16ebc97ff0e"
+    platforms_allowed: [youtube, tiktok, instagram]
+    credit_template: "Pilat's GTA 6 streams — twitch.tv/pilat"
+    hashtags: ["#Pilat", "#gta6"]
+    watermark: false
+    hooks: ["Pilat in GTA 6", "Pilat plays GTA 6", "Pilat reacts in GTA 6"]
+    title_must_include: ["gta"]
+    publish_after: "2026-11-20T00:00:00-05:00"
+    footage_after: "2026-11-19T00:00:00-05:00"
+    longform: true
+    # Reach rules: GTA 6 (or gambling — we skip those) streams only, Pilat main focus,
+    # no logos, $1/1K, 10K views before payout
+    enabled: true
+
+  - id: cr_silky
+    platform: twitch
+    streamer: "Silky"
+    twitch_login: "silky"
+    link: "twitch.tv/silky"
+    permission: campaign
+    campaign: "$7,500 Silky Pool (Reach)"
+    campaign_url: "https://contentrewards.com/c/campaigns/37f68297-664c-4820-a020-9bbb4a703bf9"
+    platforms_allowed: [youtube, tiktok, instagram]
+    credit_template: "Silky's GTA marathon — twitch.tv/silky"
+    hashtags: ["#silky", "#gta6"]
+    watermark: false
+    hooks: ["Silky in GTA 6", "Silky's GTA 6 marathon", "Silky reacts in GTA 6"]
+    title_must_include: ["gta"]
+    publish_after: "2026-11-20T00:00:00-05:00"
+    footage_after: "2026-11-19T00:00:00-05:00"
+    longform: true
+    pool: true                            # 500 views per clip, 250K total; only ~11 clippers
+    # Silky is in CORE too: a clip goes to ONE campaign only (Reach: no double submits)
+    enabled: true
+
+  - id: cr_kreekcraft
+    platform: twitch
+    streamer: "KreekCraft"
+    twitch_login: "kreekcraft"
+    link: "twitch.tv/kreekcraft"
+    permission: campaign
+    campaign: "KreekCraft GTA 6 Clipping (ClipLaunch)"
+    campaign_url: "https://contentrewards.com/c/campaigns/2eaa14fb-6927-4136-897e-b096e0d907d6"
+    longform: true
+    enabled: false                        # joined Nov 20; needs KreekCraft logo overlay on every clip (overlay support not built yet)
+
+  - id: cr_boeshi
+    platform: twitch
+    streamer: "Boeshi"
+    twitch_login: "darealboeshi"
+    link: "twitch.tv/darealboeshi"
+    permission: campaign
+    campaign: "Boeshi GTA 6 Clipping (ClipLaunch)"
+    campaign_url: "https://contentrewards.com/c/campaigns/5c01ecdb-a148-4489-ba26-5aadbbb5bf69"
+    longform: true
+    enabled: false                        # joined Nov 20; needs Boeshi overlay on every clip (overlay support not built yet)
+
+  - id: cr_parkerr
+    platform: twitch
+    streamer: "Parkerr"
+    twitch_login: "realparkerr"
+    link: "twitch.tv/realparkerr"
+    permission: campaign
+    campaign: "GTA VI | PARKERRYT STREAM (ClipHaus)"
+    campaign_url: "https://contentrewards.com/c/campaigns/e41de449-3eca-4343-a11c-b194e7a3379a"
+    longform: true
+    enabled: false                        # joined Nov 20; needs Parkerr Twitch stamp on every clip + analytics form (overlay support not built yet)
+
   - id: cr_jason
     platform: twitch
     streamer: "JasonTheWeen"
