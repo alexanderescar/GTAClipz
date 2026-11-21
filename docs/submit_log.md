@@ -94,3 +94,6 @@ UTC time | platform | link | campaign
 - 2026-11-20T15:43:40Z | instagram (submitted) | https://www.instagram.com/reel/18040319273851123/ | $9,000 Jason Pool
 - 2026-11-20T15:44:05Z | instagram (submitted) | https://www.instagram.com/reel/18121535633008268/ | $5,000 Clix GTA VI Marathon Pool
 - 2026-11-20T15:44:30Z | tiktok (skipped duplicate) | https://www.tiktok.com/@gtavicecityclipzz/video/7710080238092438797 | $9,000 Jason Pool (queued tw:2933588799@27952 has identical caption; already submitted 02:52Z)
+- 2026-11-21T15:43:20Z | instagram (submitted) | https://www.instagram.com/reel/17866774941693103/ | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-21T15:43:40Z | youtube (submitted) | https://youtube.com/shorts/LQgaGVVbHVQ | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-21T15:44:56Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710651067763019038 | $5,000 Clix GTA VI Marathon Pool
