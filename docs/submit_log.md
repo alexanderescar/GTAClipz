@@ -109,3 +109,8 @@ UTC time | platform | link | campaign
 - 2026-11-21T16:48:22Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710667489214074126 | $5,000 Clix GTA VI Marathon Pool
 - 2026-11-21T16:48:59Z | tiktok (submitted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710667029757349134 | $5,000 Clix GTA VI Marathon Pool
 - 2026-11-21T16:50:19Z | tiktok (submitted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710667489214074126 | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-21T17:43:30Z | instagram (submitted) | https://www.instagram.com/reel/17968224198207893/ | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-21T17:44:00Z | instagram (submitted) | https://www.instagram.com/reel/17902125417397196/ | Kai Cenat $10,000 GTA 6 Pool
+- 2026-11-21T17:44:20Z | youtube (submitted) | https://youtube.com/shorts/KyNCzJCS3-Y | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-21T17:45:00Z | youtube (submitted) | https://youtube.com/shorts/kpT-nohXo9Q | Kai Cenat $10,000 GTA 6 Pool
+- 2026-11-21T17:46:26Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710682446563446046 | $5,000 Clix GTA VI Marathon Pool
