@@ -98,3 +98,9 @@ UTC time | platform | link | campaign
 - 2026-11-21T15:43:40Z | youtube (submitted) | https://youtube.com/shorts/LQgaGVVbHVQ | $5,000 Clix GTA VI Marathon Pool
 - 2026-11-21T15:44:56Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710651067763019038 | $5,000 Clix GTA VI Marathon Pool
 - 2026-11-21T15:45:44Z | tiktok (submitted) | https://www.tiktok.com/@gtavicecityclipzz/video/7710651067763019038 | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-21T16:45:21Z | instagram (submitted) | https://www.instagram.com/reel/17891858487620271/ | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-21T16:45:21Z | instagram (submitted) | https://www.instagram.com/reel/18442079536197764/ | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-21T16:45:21Z | instagram (submitted) | https://www.instagram.com/reel/17987586456103693/ | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-21T16:45:21Z | youtube (submitted) | https://youtube.com/shorts/08bN2oPHYUU | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-21T16:45:21Z | youtube (submitted) | https://youtube.com/shorts/Y9Hf9hn0Pfo | $5,000 Clix GTA VI Marathon Pool
+- 2026-11-21T16:45:21Z | youtube (submitted) | https://youtube.com/shorts/fFpBwZmHQuc | $5,000 Clix GTA VI Marathon Pool
