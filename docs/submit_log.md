@@ -134,3 +134,5 @@ UTC time | platform | link | campaign
 - 2026-11-22T16:48:08Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7711038471237831967 | $7,500 Silky Pool (Reach)
 - 2026-11-22T16:49:28Z | tiktok (submitted) | https://www.tiktok.com/@gtavicecityclipzz/video/7711038471237831967 | $7,500 Silky Pool (Reach)
 - 2026-11-22T16:50:26Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7711039116850335006 | $7,500 Silky Pool (Reach)
+- 2026-11-22T16:51:08Z | tiktok (submitted) | https://www.tiktok.com/@gtavicecityclipzz/video/7711039116850335006 | $7,500 Silky Pool (Reach)
+- 2026-11-22T16:52:10Z | tiktok (posted) | https://www.tiktok.com/@gtavicecityclipzz/video/7711039536406465822 | Kai Cenat $10,000 GTA 6 Pool
