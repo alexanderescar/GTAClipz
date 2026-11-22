@@ -193,7 +193,7 @@ def process_vod(conn, v, conf, room=None):
                      "WHERE vod_id=?",
                      ("scanning" if v["is_live"] else "done", v["vod_id"]))
         conn.commit()
-        return 0
+        return None          # nothing scanned: doesn't use up a VOD slot
     in_game = v["in_game"] if "in_game" in v.keys() else None
     if v["is_live"] and in_game == 0:
         # Streamer switched away from GTA VI (e.g. a zombies break mid-marathon):
@@ -202,7 +202,7 @@ def process_vod(conn, v, conf, room=None):
         conn.execute("UPDATE vods SET processed_to=?, state='scanning', "
                      "updated_at=CURRENT_TIMESTAMP WHERE vod_id=?", (horizon, v["vod_id"]))
         conn.commit()
-        return 0
+        return None
     end = min(horizon, start + lf["max_chunk_s"])
     log.info("scan %s [%s] %s %.0f→%.0fs", v["vod_id"], v["lane"],
              v["streamer"], start, end)
@@ -299,11 +299,15 @@ def run():
     # Higher-priority streamers (priority: in sources.yml) get scanned first.
     if full:
         todo = [v for v in todo if (source_by_id(v["source_id"]) or {}).get("brake_exempt")]
+    # (Nov 22 bug: the slots used to be taken before checking for footage, so
+    # three live streams with nothing new blocked every other VOD for 12 hours.)
     todo = sorted(todo, key=lambda v: -float((source_by_id(v["source_id"]) or {})
-                                             .get("priority", 1)))[:lf["max_vods_per_run"]]
-    total, t0 = 0, time.time()
+                                             .get("priority", 1)))
+    total, scanned, t0 = 0, 0, time.time()
     signal.signal(signal.SIGALRM, _alarm)
     for v in todo:
+        if scanned >= lf["max_vods_per_run"]:
+            break
         left = lf.get("stage_budget_s", 900) - (time.time() - t0)
         room = lf.get("max_clips_per_run", 8) - total
         if left < 120 or room <= 0:
@@ -311,7 +315,11 @@ def run():
             break
         signal.alarm(int(min(lf.get("vod_budget_s", 600), left)))
         try:
-            total += process_vod(conn, v, conf, room=room)
+            n = process_vod(conn, v, conf, room=room)
+            if n is None:
+                continue
+            scanned += 1
+            total += n
         except VodTimeout:
             conn.rollback()
             if v["lane"] == "publish":
