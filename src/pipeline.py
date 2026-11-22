@@ -123,7 +123,13 @@ def stage_render(conn, conf):
             dur = min(transform.probe(src_path)["duration"], cap)
             vocab = [x for x in (c["streamer"], src.get("streamer")) if x]
             transform.render(src_path, out, hook_text=hook, conf=rconf, duration=dur,
-                             facecam=src.get("facecam"), vocab=vocab)
+                             facecam=src.get("facecam"), vocab=vocab,
+                             require_face=src.get("require_face", bool(src.get("facecam"))))
+        except transform.NoFace as e:
+            # Alex rejects clips where the streamer can't be seen: drop it here
+            log.info("no face, dropped %s: %s", c["clip_id"], e)
+            conn.execute("UPDATE clips SET state='no_face' WHERE clip_id=?", (c["clip_id"],))
+            continue
         except Exception as e:  # noqa: BLE001
             log.error("render failed %s: %s", c["clip_id"], e)
             conn.execute("UPDATE clips SET state='render_failed' WHERE clip_id=?",

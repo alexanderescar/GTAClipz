@@ -10,6 +10,9 @@ curl_cffi
 # Captions (CPU-friendly; tiny/base models run fine on a free cloud box)
 faster-whisper==1.0.3
 
+# Finding the streamer's face (webcam check)
+opencv-python-headless==4.10.0.84
+
 # Perceptual dedupe
 Pillow==10.4.0
 imagehash==4.3.1

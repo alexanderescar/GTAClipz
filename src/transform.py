@@ -290,8 +290,12 @@ def transcribe(src, conf, caption_y=None, vocab=None, bleeps=None):
 
 
 # ── Main render ────────────────────────────────────────────────────────────
+class NoFace(Exception):
+    """The streamer isn't visible in this clip (cam moved, off, or covered)."""
+
+
 def render(src, dst, hook_text=None, conf=None, start=0.0, duration=None,
-           facecam=None, vocab=None):
+           facecam=None, vocab=None, require_face=False):
     conf = conf or cfg()
     r = conf["render"]
     W, H = r["width"], r["height"]
@@ -299,6 +303,14 @@ def render(src, dst, hook_text=None, conf=None, start=0.0, duration=None,
     duration = duration or min(info["duration"], cfg()["defaults"]["max_clip_seconds"]
                                if "defaults" in cfg() else 75)
 
+    if facecam or require_face or r.get("auto_facecam", True):
+        # every streamer: put their face on top when we can find it
+        import faces
+        found, why = faces.find_cam(src, facecam, start, duration)
+        log.info("facecam: %s", why)
+        if found is None and require_face:
+            raise NoFace(why)
+        facecam = found
     if facecam:                                    # D: cam on top, game below
         chain, seam = split_filter(facecam, info["width"], info["height"], W, H)
         cap_y, hook_center = seam, seam
