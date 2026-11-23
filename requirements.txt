@@ -13,6 +13,9 @@ faster-whisper==1.0.3
 # Finding the streamer's face (webcam check)
 opencv-python-headless==4.10.0.84
 
+# Nudity / sexual content check (model ships inside the package)
+nudenet==3.4.2
+
 # Perceptual dedupe
 Pillow==10.4.0
 imagehash==4.3.1

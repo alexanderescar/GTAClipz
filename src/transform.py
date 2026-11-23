@@ -194,6 +194,9 @@ def clean_word(raw):
     return core.upper()
 
 
+LAST_TEXT = ""   # what was said in the last transcribed clip (the nsfw check reads it)
+
+
 def transcribe(src, conf, caption_y=None, vocab=None, bleeps=None):
     """Word-by-word captions (current word highlighted) as an ASS file.
 
@@ -245,14 +248,18 @@ def transcribe(src, conf, caption_y=None, vocab=None, bleeps=None):
         m, s_ = divmod(rem, 60)
         return f"{int(h)}:{int(m):02d}:{s_:05.2f}"
 
+    global LAST_TEXT
     words = []
+    spoken = []
     for seg in segments:
+        spoken.append(seg.text)
         for w in seg.words or []:
             if bleeps is not None and is_bleep(w.word):
                 bleeps.append((w.start, w.end))
             text = clean_word(w.word)
             if text:
                 words.append((w.start, w.end, text))
+    LAST_TEXT = " ".join(spoken)
 
     # group into short phrases: max N words / chars, break on pauses + punctuation
     max_words = r.get("max_words", 3)
@@ -303,6 +310,8 @@ def render(src, dst, hook_text=None, conf=None, start=0.0, duration=None,
     duration = duration or min(info["duration"], cfg()["defaults"]["max_clip_seconds"]
                                if "defaults" in cfg() else 75)
 
+    global LAST_TEXT
+    LAST_TEXT = ""
     if facecam or require_face or r.get("auto_facecam", True):
         # every streamer: put their face on top when we can find it
         import faces

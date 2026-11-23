@@ -78,6 +78,12 @@ render:
 
 # ── Safety gates (hard stops, not suggestions) ────────────────────────────
 safety:
+  nsfw:                     # drop nudity / sexual content before review (strikes on TikTok/YouTube)
+    enabled: true
+    fps: 2                        # frames checked per second of clip
+    exposed_min_score: 0.45       # any exposed breasts/genitals/buttocks at this confidence -> drop
+    suggestive_min_score: 0.5     # lingerie / bikini-level detections...
+    suggestive_frame_share: 0.2   # ...in 20%+ of frames -> drop (strip-club dancing)
   require_permission: true          # refuse to publish permission: none
   block_first_7s_graphic: true      # YouTube ad-eligibility boundary
   strip_source_watermarks: true     # another platform's logo kills reach

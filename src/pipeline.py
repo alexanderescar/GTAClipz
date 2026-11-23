@@ -28,6 +28,7 @@ from common import (WORK, cfg, db, ensure_dirs, is_publishable, lane_for, log,
                     posts_today, source_by_id, sources)
 import metadata
 import transform
+import nsfw
 
 
 def safe(clip_id):
@@ -122,9 +123,21 @@ def stage_render(conn, conf):
         try:
             dur = min(transform.probe(src_path)["duration"], cap)
             vocab = [x for x in (c["streamer"], src.get("streamer")) if x]
-            transform.render(src_path, out, hook_text=hook, conf=rconf, duration=dur,
-                             facecam=src.get("facecam"), vocab=vocab,
-                             require_face=src.get("require_face", bool(src.get("facecam"))))
+            # nudity / sexual content: checked on the picture before rendering
+            # (cheap) and on what was said after (needs the transcript)
+            bad = nsfw.check(src_path, 0.0, dur, "", conf)
+            if not bad:
+                transform.render(src_path, out, hook_text=hook, conf=rconf, duration=dur,
+                                 facecam=src.get("facecam"), vocab=vocab,
+                                 require_face=src.get("require_face", bool(src.get("facecam"))))
+                bad = nsfw.scan_words(transform.LAST_TEXT)[0] if (
+                    (conf["safety"].get("nsfw") or {}).get("enabled", True)) else None
+            if bad:
+                log.info("nsfw, dropped %s: %s", c["clip_id"], bad)
+                conn.execute("UPDATE clips SET state='nsfw', note=? WHERE clip_id=?",
+                             (f"nsfw: {bad}"[:200], c["clip_id"]))
+                out.unlink(missing_ok=True)
+                continue
         except transform.NoFace as e:
             # Alex rejects clips where the streamer can't be seen: drop it here
             log.info("no face, dropped %s: %s", c["clip_id"], e)
