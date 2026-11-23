@@ -21,3 +21,4 @@ One line per item: timestamp (ET) | server/channel | author | summary
 - 2026-11-22 01:10 | Reach / #live-campaigns | mudaap (Reach Team) | $25,000 Lacy Pool Campaign: TT/IG/YT, caption must name Lacy + #Lacy, MVR 1M, ends Dec 21 (flagged RULE CHANGE?)
 - 2026-11-22 01:16 | Reach / #live-campaigns | mudaap (Reach Team) | $5,000 Lacy X Campaign: X only, same caption rules, MVR 250K, ends Dec 21 (flagged RULE CHANGE?)
 - 2026-11-22 18:14 | Reach / #announcements | Dylan (Reach staff) | New YourRAGE $7,500 Pool campaign (YourRAGEPool), differs from $5k pool in config (flagged RULE CHANGE?)
+- 2026-11-23 02:23 | Reach / #live-campaigns | mudaap (Reach Team) | $7,500 YourRAGE Pool forum post: clip YourRage socials, caption names Rage + #YourRAGE, TT/IG/YT/X, 30 days, MVR 250K (flagged RULE CHANGE?)
