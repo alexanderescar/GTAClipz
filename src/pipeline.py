@@ -125,7 +125,9 @@ def stage_render(conn, conf):
             vocab = [x for x in (c["streamer"], src.get("streamer")) if x]
             # nudity / sexual content: checked on the picture before rendering
             # (cheap) and on what was said after (needs the transcript)
-            bad = nsfw.check(src_path, 0.0, dur, "", conf)
+            bad, warn = nsfw.check(src_path, 0.0, dur, "", conf)
+            if warn:   # shown in the review issue only, never in captions
+                conn.execute("UPDATE clips SET flag=? WHERE clip_id=?", (warn, c["clip_id"]))
             if not bad:
                 transform.render(src_path, out, hook_text=hook, conf=rconf, duration=dur,
                                  facecam=src.get("facecam"), vocab=vocab,
@@ -134,8 +136,8 @@ def stage_render(conn, conf):
                     (conf["safety"].get("nsfw") or {}).get("enabled", True)) else None
             if bad:
                 log.info("nsfw, dropped %s: %s", c["clip_id"], bad)
-                conn.execute("UPDATE clips SET state='nsfw', note=? WHERE clip_id=?",
-                             (f"nsfw: {bad}"[:200], c["clip_id"]))
+                conn.execute("UPDATE clips SET state='nsfw', flag=? WHERE clip_id=?",
+                             (bad[:200], c["clip_id"]))
                 out.unlink(missing_ok=True)
                 continue
         except transform.NoFace as e:

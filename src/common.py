@@ -124,7 +124,8 @@ def db():
                       ("chat_ratio", "REAL"), ("audio_lift", "REAL"),
                       ("vod_id", "TEXT"), ("vod_start", "REAL"),
                       ("chat_top", "TEXT"), ("preview_url", "TEXT"),
-                      ("review_issue", "INTEGER"), ("queued_at", "TEXT")]:
+                      ("review_issue", "INTEGER"), ("queued_at", "TEXT"),
+                      ("flag", "TEXT")]:          # warning shown in review (e.g. possible nudity)
         try:
             conn.execute(f"ALTER TABLE clips ADD COLUMN {col} {decl}")
         except sqlite3.OperationalError:

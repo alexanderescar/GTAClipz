@@ -74,8 +74,10 @@ def clip_block(c):
     prev = (f"[Watch / download for TikTok]({c['preview_url']})"
             if c["preview_url"] else "_preview unavailable — set storage.r2_public_base_")
     chat = f" · chat said: **{c['chat_top']}**" if c["chat_top"] else ""
+    flag = c["flag"] if "flag" in c.keys() and c["flag"] else ""
+    flag = f"> **{flag}**\n\n" if flag else ""
     return (f"\n---\n### {c['streamer']} — {c['note'] or ''}\n"
-            f"{' · '.join(bits)}{chat}\n\n▶️ {prev}\n\n"
+            f"{flag}{' · '.join(bits)}{chat}\n\n▶️ {prev}\n\n"
             f"- [ ] ✅ Approve `{c['clip_id']}`\n"
             f"- [ ] ❌ Reject `{c['clip_id']}`\n")
 

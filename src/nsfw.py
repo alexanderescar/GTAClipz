@@ -57,38 +57,50 @@ def _frames(src, start, duration, fps, long_side=640):
 
 
 def scan_picture(src, start=0.0, duration=None, conf=None):
-    """Return (flag_reason or None, stats)."""
+    """Return (drop_reason, warn_reason, stats).
+
+    Backtest on 184 clips (Nov 23): single low-confidence hits (1-2 frames under
+    0.6) caught real nudity sometimes (the reel Instagram removed) but were
+    false alarms more often, so they don't drop the clip: it goes to review
+    with a warning and the seconds to check. Strong hits drop it."""
     s = ((conf or {}).get("safety") or {}).get("nsfw") or {}
     fps = s.get("fps", 2)
     hard_min = s.get("exposed_min_score", 0.45)
+    sure = s.get("exposed_sure_score", 0.6)
+    sure_frames = s.get("exposed_sure_frames", 3)
     soft_min = s.get("suggestive_min_score", 0.5)
     soft_share = s.get("suggestive_frame_share", 0.2)
     if duration is None:
         from transform import probe
         duration = probe(src)["duration"] - start
-    frames = exposed = suggestive = 0
-    worst = ("", 0.0)
+    frames = suggestive = 0
+    hits = []                      # (seconds into clip, class, score)
     det = _det()
-    for img in _frames(src, start, duration, fps):
+    for i, img in enumerate(_frames(src, start, duration, fps)):
         frames += 1
-        found = det.detect(img)
+        best = None
         hit_soft = False
-        for d in found:
+        for d in det.detect(img):
             c, sc = d["class"], d["score"]
             if c in EXPOSED and sc >= hard_min:
-                exposed += 1
-                if sc > worst[1]:
-                    worst = (c, sc)
+                if best is None or sc > best[2]:
+                    best = (i / fps, c, sc)
             elif c in SUGGESTIVE and sc >= soft_min:
                 hit_soft = True
+        if best:
+            hits.append(best)
         suggestive += hit_soft
-    stats = {"frames": frames, "exposed": exposed, "suggestive": suggestive,
-             "worst": f"{worst[0]} {worst[1]:.2f}" if worst[0] else ""}
-    if exposed:
-        return f"nudity ({exposed} frames, worst {stats['worst']})", stats
+    worst = max(hits, key=lambda h: h[2]) if hits else None
+    stats = {"frames": frames, "exposed": len(hits), "suggestive": suggestive,
+             "worst": f"{worst[1]} {worst[2]:.2f}" if worst else ""}
+    if hits and (len(hits) >= sure_frames or worst[2] >= sure):
+        return f"nudity ({len(hits)} frames, worst {stats['worst']})", None, stats
     if frames and suggestive / frames >= soft_share:
-        return f"sexual/suggestive content in {suggestive}/{frames} frames", stats
-    return None, stats
+        return f"sexual/suggestive content in {suggestive}/{frames} frames", None, stats
+    if hits:
+        at = ", ".join(f"{int(t // 60)}:{int(t % 60):02d}" for t, _, _ in hits[:4])
+        return None, f"⚠️ possible nudity at {at} — check before approving", stats
+    return None, None, stats
 
 
 def scan_words(text):
@@ -97,16 +109,16 @@ def scan_words(text):
 
 
 def check(src, start, duration, transcript, conf):
-    """Return a reason string if the clip should be dropped, else None."""
+    """Return (drop_reason, warn_reason). Either may be None."""
     if not ((conf.get("safety") or {}).get("nsfw") or {}).get("enabled", True):
-        return None
-    why, hits = scan_words(transcript)
+        return None, None
+    why, _ = scan_words(transcript)
     if why:
-        return why
+        return why, None
     try:
-        why, stats = scan_picture(src, start, duration, conf)
+        drop, warn, stats = scan_picture(src, start, duration, conf)
     except Exception as e:  # noqa: BLE001  -- a broken check must not block the factory
         log.warning("nsfw: picture check failed (%s); letting the clip through", e)
-        return None
+        return None, None
     log.info("nsfw: %s", stats)
-    return why
+    return drop, warn
