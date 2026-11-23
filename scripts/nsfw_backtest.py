@@ -34,7 +34,8 @@ tmp = pathlib.Path(tempfile.mkdtemp())
 for clip_id, streamer, state, url, dec in rows:
     f = tmp / "c.mp4"
     try:
-        urllib.request.urlretrieve(url, f)
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 gtaclipz-backtest"})
+        f.write_bytes(urllib.request.urlopen(req, timeout=60).read())
         why, stats = nsfw.scan_picture(f, 0, None, conf)
     except Exception as e:  # noqa: BLE001
         print("skip", clip_id, e)
