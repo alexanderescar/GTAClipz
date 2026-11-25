@@ -22,3 +22,6 @@ One line per item: timestamp (ET) | server/channel | author | summary
 - 2026-11-22 01:16 | Reach / #live-campaigns | mudaap (Reach Team) | $5,000 Lacy X Campaign: X only, same caption rules, MVR 250K, ends Dec 21 (flagged RULE CHANGE?)
 - 2026-11-22 18:14 | Reach / #announcements | Dylan (Reach staff) | New YourRAGE $7,500 Pool campaign (YourRAGEPool), differs from $5k pool in config (flagged RULE CHANGE?)
 - 2026-11-23 02:23 | Reach / #live-campaigns | mudaap (Reach Team) | $7,500 YourRAGE Pool forum post: clip YourRage socials, caption names Rage + #YourRAGE, TT/IG/YT/X, 30 days, MVR 250K (flagged RULE CHANGE?)
+- 2026-11-24 13:44 | Reach / #announcements + #live-campaigns | Dylan / mudaap (Reach Team) | New $3,000 Juliano Massarelli dedicated-account campaign, $1/1k (not GTA)
+- 2026-11-24 15:25 | Reach / #announcements + #live-campaigns | Dylan / mudaap (Reach Team) | New $3,000 JNAGOLF campaign, Going D1 footage only, $1/1k (not GTA)
+- 2026-11-25 12:58 | Reach / #announcements | Dylan (Reach Team) | New Nogla $5,000 campaign (Nogla + others), $2/1k, IG/TT/X/YT (not in config; GTA not stated)
