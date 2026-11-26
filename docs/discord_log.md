@@ -25,3 +25,4 @@ One line per item: timestamp (ET) | server/channel | author | summary
 - 2026-11-24 13:44 | Reach / #announcements + #live-campaigns | Dylan / mudaap (Reach Team) | New $3,000 Juliano Massarelli dedicated-account campaign, $1/1k (not GTA)
 - 2026-11-24 15:25 | Reach / #announcements + #live-campaigns | Dylan / mudaap (Reach Team) | New $3,000 JNAGOLF campaign, Going D1 footage only, $1/1k (not GTA)
 - 2026-11-25 12:58 | Reach / #announcements | Dylan (Reach Team) | New Nogla $5,000 campaign (Nogla + others), $2/1k, IG/TT/X/YT (not in config; GTA not stated)
+- 2026-11-25 21:02 | Reach / #announcements | Dylan (Reach Team) | Social Media Justice campaign update: CPM boosted to $3/1k, ~$19.6K left, podcasts, no application (not GTA)
